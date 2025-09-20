@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="content-card p-4">
+            <h3 class="mb-4 text-center">Create User</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role</label>
+                    <select class="form-select" id="role" name="role" required>
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="hod">HOD</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="department_id" class="form-label">Department</label>
+                    <select class="form-select" id="department_id" name="department_id">
+                        <option value="">-- Select Department --</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="class_group_id" class="form-label">Class</label>
+                    <select class="form-select" id="class_group_id" name="class_group_id">
+                        <option value="">-- Select Class --</option>
+                        {% for cg in classes %}
+                        <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}">
+                            {{ cg.department.name }} - Year {{ cg.year }} {{ cg.section }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deptSelect = document.getElementById('department_id');
+    const classSelect = document.getElementById('class_group_id');
+    const roleSelect = document.getElementById('role');
+
+    function filterClasses() {
+        const selectedDept = deptSelect.value;
+        Array.from(classSelect.options).forEach(opt => {
+            if (!opt.value) return;
+            opt.style.display = opt.dataset.dept === selectedDept || selectedDept === "" ? 'block' : 'none';
+        });
+        if (classSelect.selectedOptions[0] && classSelect.selectedOptions[0].dataset.dept !== selectedDept) {
+            classSelect.value = "";
+        }
+    }
+
+    deptSelect.addEventListener('change', filterClasses);
+
+    roleSelect.addEventListener('change', function() {
+        const role = roleSelect.value;
+        if (role === 'student') {
+            classSelect.required = true;
+            deptSelect.required = false;
+        } else {
+            classSelect.required = false;
+            deptSelect.required = false;
+        }
+    });
+
+    roleSelect.dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

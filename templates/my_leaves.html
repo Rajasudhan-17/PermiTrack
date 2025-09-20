@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-card">
+  <h2 class="mb-4">My Leaves</h2>
+
+  {% if leaves %}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered table-hover align-middle">
+        <thead>
+          <tr class="text-center">
+            <th>ID</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Applied On</th>
+            <th>Review</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in leaves %}
+          <tr>
+            <td class="text-center">{{ l.id }}</td>
+            <td>{{ l.start_date }}</td>
+            <td>{{ l.end_date }}</td>
+            <td class="text-center">
+              {% if l.status == 'Approved' %}
+                <span class="badge bg-success">{{ l.status }}</span>
+              {% elif l.status == 'Rejected' %}
+                <span class="badge bg-danger">{{ l.status }}</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">{{ l.status }}</span>
+              {% endif %}
+            </td>
+            <td>{{ l.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ l.review_comment or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info mb-0">
+      No leaves applied yet.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-card">
+  <h2 class="mb-4">Review Leave #{{ leave.id }}</h2>
+
+  <div class="mb-3">
+    <p><strong>Applicant:</strong> {{ leave.applicant.full_name or leave.applicant.username }}</p>
+    <p><strong>Start:</strong> {{ leave.start_date }} &nbsp; — &nbsp; <strong>End:</strong> {{ leave.end_date }}</p>
+    <p><strong>Reason:</strong><br>{{ leave.reason }}</p>
+  </div>
+
+  <hr>
+
+  <form method="post">
+    <div class="mb-3">
+      <label for="comment" class="form-label">Comment (optional)</label>
+      <textarea name="comment" id="comment" rows="4" class="form-control"></textarea>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button name="action" value="APPROVE" type="submit" class="btn btn-success">Approve</button>
+      <button name="action" value="REJECT" type="submit" class="btn btn-danger">Reject</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

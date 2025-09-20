@@ -1,0 +1,74 @@
+<!-- templates/admin_assign_hod.html -->
+{% extends "layout.html" %}
+
+{% block title %}Assign HOD{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Assign HOD to Department</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Assign HOD form -->
+    <form method="POST" action="{{ url_for('assign_hod') }}">
+        <div class="mb-3">
+            <label for="department_id" class="form-label">Department</label>
+            <select class="form-select" id="department_id" name="department_id" required>
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if dept.hod_id %}selected{% endif %}>
+                        {{ dept.name }} {% if dept.hod %}- Current HOD: {{ dept.hod.full_name }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="hod_user_id" class="form-label">HOD User</label>
+            <select class="form-select" id="hod_user_id" name="hod_user_id" required>
+                <option value="">Select User</option>
+                {% for user in faculty_users %}
+                    <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Assign HOD</button>
+    </form>
+
+    <hr>
+
+    <!-- Existing HOD assignments -->
+    <h3 class="mt-4">Current HOD Assignments</h3>
+    {% if departments %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th>HOD</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in departments %}
+                    <tr>
+                        <td>{{ dept.name }}</td>
+                        <td>{{ dept.hod.full_name if dept.hod else 'Not assigned' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No departments found.</p>
+    {% endif %}
+</div>
+{% endblock %}

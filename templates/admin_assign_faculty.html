@@ -1,0 +1,75 @@
+<!-- templates/admin_assign_faculty.html -->
+{% extends "layout.html" %}
+
+{% block title %}Assign Faculty to Class{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Assign Faculty to Class</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Assign Faculty Form -->
+    <form method="POST" action="{{ url_for('assign_faculty') }}">
+        <div class="mb-3">
+            <label for="class_group_id" class="form-label">Class</label>
+            <select class="form-select" id="class_group_id" name="class_group_id" required>
+                <option value="">Select Class</option>
+                {% for cg in classes %}
+                    <option value="{{ cg.id }}" {% if cg.faculty %}selected{% endif %}>
+                        {{ cg.department.name }} Y{{ cg.year }}{{ cg.section }} 
+                        {% if cg.faculty %}- Current Faculty: {{ cg.faculty.full_name }}{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="faculty_id" class="form-label">Faculty User</label>
+            <select class="form-select" id="faculty_id" name="faculty_id" required>
+                <option value="">Select Faculty</option>
+                {% for user in faculty_users %}
+                    <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Assign Faculty</button>
+    </form>
+
+    <hr>
+
+    <!-- Current Faculty Assignments -->
+    <h3 class="mt-4">Current Faculty Assignments</h3>
+    {% if classes %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Faculty</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cg in classes %}
+                    <tr>
+                        <td>{{ cg.department.name }} Y{{ cg.year }}{{ cg.section }}</td>
+                        <td>{{ cg.faculty.full_name if cg.faculty else 'Not assigned' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No classes found.</p>
+    {% endif %}
+</div>
+{% endblock %}

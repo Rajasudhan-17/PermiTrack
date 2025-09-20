@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}Apply OD{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <h2 class="mb-4">Apply for On-Duty (OD)</h2>
+
+  <form method="POST" enctype="multipart/form-data">
+
+    <!-- Event Date -->
+    <div class="mb-3">
+      <label for="event_date" class="form-label">Event Date</label>
+      <input type="date" class="form-control" id="event_date" name="event_date" required>
+    </div>
+
+    <!-- Reason -->
+    <div class="mb-3">
+      <label for="reason" class="form-label">Reason</label>
+      <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Enter reason for OD" required></textarea>
+    </div>
+
+    <!-- Proof Upload -->
+    <div class="mb-3">
+      <label for="proof" class="form-label">Upload Proof (Optional)</label>
+      <input type="file" class="form-control" id="proof" name="proof"
+             accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.txt">
+    </div>
+
+    <!-- Buttons -->
+    <button type="submit" class="btn btn-primary">Submit Application</button>
+    <a href="{{ url_for('my_ods') }}" class="btn btn-secondary">Cancel</a>
+
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block title %}All On-Duty Applications{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">All On-Duty (OD) Applications</h2>
+
+    {% if ods %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center">
+            <thead class="table-primary">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Applicant</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Event Date</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Applied On</th>
+                    <th scope="col">Faculty</th>
+                    <th scope="col">Reviewed By</th>
+                    <th scope="col">Review Comment</th>
+                    <th scope="col">Reviewed On</th>
+                    <th scope="col">Proof</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for od in ods %}
+                <tr>
+                    <td>{{ od.id }}</td>
+                    <td>{{ od.requester.full_name }}</td>
+                    <td>{{ od.requester.role|capitalize }}</td>
+                    <td>{{ od.event_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="text-wrap text-start">{{ od.reason }}</td>
+                    <td>
+                        {% if od.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark">{{ od.status }}</span>
+                        {% elif od.status == 'FACULTY_APPROVED' %}
+                            <span class="badge bg-info text-dark">{{ od.status }}</span>
+                        {% elif od.status == 'APPROVED' %}
+                            <span class="badge bg-success">{{ od.status }}</span>
+                        {% elif od.status == 'REJECTED' %}
+                            <span class="badge bg-danger">{{ od.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ od.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ od.faculty.full_name if od.faculty else '-' }}</td>
+                    <td>{{ od.approver.full_name if od.approver else '-' }}</td>
+                    <td class="text-wrap text-start">{{ od.review_comment if od.review_comment else '-' }}</td>
+                    <td>{{ od.reviewed_on.strftime('%Y-%m-%d %H:%M') if od.reviewed_on else '-' }}</td>
+                    <td>
+                        {% if od.proof_filename %}
+                            <a href="{{ url_for('send_od_proof', od_id=od.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info mt-3">No On-Duty applications found.</div>
+    {% endif %}
+</div>
+{% endblock %}

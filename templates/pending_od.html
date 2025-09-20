@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-card">
+  <h2 class="mb-4">Pending On-Duty Requests</h2>
+
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Date</th>
+        <th>Reason</th>
+        <th>Proof</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for od in ods %}
+      <tr>
+        <!-- Show student's full name from requester relationship -->
+        <td>
+          {% if od.requester and od.requester.full_name %}
+            {{ od.requester.full_name }}
+          {% else %}
+            User ID: {{ od.requested_by }}
+          {% endif %}
+        </td>
+
+        <td>{{ od.event_date.strftime('%d-%m-%Y') }}</td>
+        <td>{{ od.reason }}</td>
+
+        <td>
+          {% if od.proof_filename %}
+            <a href="{{ url_for('send_od_proof', od_id=od.id) }}" 
+               target="_blank" class="link-primary">View</a>
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+
+        <td>
+          <a href="{{ url_for('review_od', od_id=od.id) }}" 
+             class="btn btn-sm btn-primary">Review</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="text-center">No pending OD requests.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
