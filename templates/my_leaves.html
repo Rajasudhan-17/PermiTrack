@@ -23,12 +23,16 @@
             <td>{{ l.start_date }}</td>
             <td>{{ l.end_date }}</td>
             <td class="text-center">
-              {% if l.status == 'Approved' %}
-                <span class="badge bg-success">{{ l.status }}</span>
-              {% elif l.status == 'Rejected' %}
-                <span class="badge bg-danger">{{ l.status }}</span>
+              {% if l.status == 'APPROVED' %}
+                <span class="badge bg-success">Approved</span>
+              {% elif l.status == 'REJECTED' %}
+                <span class="badge bg-danger">Rejected</span>
+              {% elif l.status == 'FACULTY_APPROVED' %}
+                <span class="badge bg-info text-dark">Faculty Approved</span>
+              {% elif l.status == 'PENDING' %}
+                <span class="badge bg-warning text-dark">Pending</span>
               {% else %}
-                <span class="badge bg-warning text-dark">{{ l.status }}</span>
+                <span class="badge bg-secondary">{{ l.status }}</span>
               {% endif %}
             </td>
             <td>{{ l.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>

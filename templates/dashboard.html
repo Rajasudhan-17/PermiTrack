@@ -1,20 +1,19 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="text-center mb-4">
-    <h2>Welcome, {{ current_user.username }}</h2>
+<div class="container py-5">
+  <div class="text-center mb-5 fade-in">
+    <h2 class="fw-bold">Welcome, {{ current_user.username }}</h2>
     <p class="lead">Role: {{ current_user.role|capitalize }}</p>
-    <p>Please click on the widgets below:</p>
+    <p class="text-muted">Please click on the widgets below:</p>
   </div>
 
-  <div class="row g-4">
+  <div class="row g-4 fade-in">
     {% if current_user.role == 'student' %}
       <!-- My Leaves -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('my_leaves') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Calendar -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-primary" viewBox="0 0 16 16">
               <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h.5A1.5 1.5 0 0 1 15 2.5V4H1V2.5A1.5 1.5 0 0 1 2.5 1H3v-.5a.5.5 0 0 1 .5-.5zM1 5h14v8.5A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5V5z"/>
             </svg>
@@ -26,8 +25,7 @@
       <!-- Apply Leave -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('apply_leave') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Pencil -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-success" viewBox="0 0 16 16">
               <path d="M12.854.146a.5.5 0 0 1 .11.638l-.057.07-10 10L2 13l2.146-1.146 10-10a.5.5 0 0 1 .708.708l-10 10a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.65-.65l1-3a.5.5 0 0 1 .11-.168l10-10a.5.5 0 0 1 .707 0z"/>
             </svg>
@@ -39,8 +37,7 @@
       <!-- Apply OD -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('apply_od') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Briefcase -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-warning" viewBox="0 0 16 16">
               <path d="M6.5 0a1 1 0 0 0-1 1v1H2a2 2 0 0 0-2 2v1h16V4a2 2 0 0 0-2-2h-3.5V1a1 1 0 0 0-1-1h-3zM0 6v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6H0zm6.5-5h3a.5.5 0 0 1 .5.5V2h-4V1.5a.5.5 0 0 1 .5-.5z"/>
             </svg>
@@ -52,8 +49,7 @@
       <!-- My ODs -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('my_ods') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Archive -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-info" viewBox="0 0 16 16">
               <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5v1A1.5 1.5 0 0 0 2.5 6h11A1.5 1.5 0 0 0 15 4.5v-1A1.5 1.5 0 0 0 13.5 2h-11zm0 1h11a.5.5 0 0 1 .5.5V4h-12v-.5a.5.5 0 0 1 .5-.5z"/>
               <path d="M3 7v6.5A1.5 1.5 0 0 0 4.5 15h7A1.5 1.5 0 0 0 13 13.5V7H3zm4.5 2a.5.5 0 0 1 .5.5V11h-1V9.5a.5.5 0 0 1 .5-.5z"/>
@@ -68,8 +64,7 @@
       <!-- Pending Leaves -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('pending') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Check-square -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-danger" viewBox="0 0 16 16">
               <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
               <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 0 1 1.06-1.06L7 8.293l3.97-3.322z"/>
@@ -82,8 +77,7 @@
       <!-- Pending ODs -->
       <div class="col-md-4 col-sm-6">
         <a href="{{ url_for('pending_od') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Clipboard -->
+          <div class="card widget-card text-center p-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-dark" viewBox="0 0 16 16">
               <path d="M10 1.5v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1A.5.5 0 0 1 6.5 1h3a.5.5 0 0 1 .5.5zM9.5 2h-3v1h3V2z"/>
             </svg>
@@ -94,115 +88,71 @@
     {% endif %}
 
     {% if current_user.role == 'admin' %}
-      <!-- Departments -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('create_department') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Building -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-primary" viewBox="0 0 16 16">
-              <path d="M6 1v14H2V1h4zm8 0v14h-4V1h4zM1 15h14v1H1v-1z"/>
-            </svg>
-            <h5 class="card-title">Departments</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Classes -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('create_class') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Collection -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-success" viewBox="0 0 16 16">
-              <path d="M2 2h12v2H2V2zm0 5h12v2H2V7zm0 5h12v2H2v-2z"/>
-            </svg>
-            <h5 class="card-title">Classes</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Users -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('admin_create_user') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: People -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-warning" viewBox="0 0 16 16">
-              <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm6-6a3 3 0 1 0-6 0 3 3 0 0 0 6 0z"/>
-            </svg>
-            <h5 class="card-title">Users</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Assign HOD -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('assign_hod') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Person Badge -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-danger" viewBox="0 0 16 16">
-              <path d="M6 8a3 3 0 1 1 6 0A3 3 0 0 1 6 8z"/>
-              <path d="M14 14s-1-3-6-3-6 3-6 3v1h12v-1z"/>
-            </svg>
-            <h5 class="card-title">Assign HOD</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Assign Faculty -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('assign_faculty') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Person Plus -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-info" viewBox="0 0 16 16">
-              <path d="M8 7a3 3 0 1 0-6 0 3 3 0 0 0 6 0zM5 14s-1 0-1-1 1-4 4-4 4 3 4 4-1 1-1 1H5zm7-5v-2h-1v2h-2v1h2v2h1v-2h2v-1h-2z"/>
-            </svg>
-            <h5 class="card-title">Assign Faculty</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- All Leaves -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('admin_all_leaves') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: File-text -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-secondary" viewBox="0 0 16 16">
-              <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6l-6-6H4z"/>
-            </svg>
-            <h5 class="card-title">All Leaves</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- All ODs -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('admin_all_ods') }}" class="text-decoration-none">
-          <div class="card h-100 shadow-sm text-center p-4 widget-card">
-            <!-- SVG: Folder -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-dark" viewBox="0 0 16 16">
-              <path d="M9.828 4a.5.5 0 0 1 .354.146l1.5 1.5H14a2 2 0 0 1 2 2v5.5A1.5 1.5 0 0 1 14.5 14H1.5A1.5 1.5 0 0 1 0 12.5V4a2 2 0 0 1 2-2h3.5l1 1H9.828z"/>
-            </svg>
-            <h5 class="card-title">All ODs</h5>
-          </div>
-        </a>
-      </div>
+      {% for card in [
+        ('create_department','Departments','M6 1v14H2V1h4zm8 0v14h-4V1h4zM1 15h14v1H1v-1z','text-primary'),
+        ('create_class','Classes','M2 2h12v2H2V2zm0 5h12v2H2V7zm0 5h12v2H2v-2z','text-success'),
+        ('admin_create_user','Users','M3 14s-1 0-1-1 1-4 6-4 6 4 6 4-1 1-1 1H3zm6-6a3 3 0 1 0-6 0 3 3 0 0 0 6 0z','text-warning'),
+        ('assign_hod','Assign HOD','M6 8a3 3 0 1 1 6 0A3 3 0 0 1 6 8z M14 14s-1-3-6-3-6 3-6 3v1h12v-1z','text-danger'),
+        ('assign_faculty','Assign Faculty','M8 7a3 3 0 1 0-6 0 3 3 0 0 0 6 0zM5 14s-1 0-1-1 1-4 4-4 4 3 4 4-1 1-1 1H5zm7-5v-2h-1v2h-2v1h2v2h1v-2h2v-1h-2z','text-info'),
+        ('admin_all_leaves','All Leaves','M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6l-6-6H4z','text-secondary'),
+        ('admin_all_ods','All ODs','M9.828 4a.5.5 0 0 1 .354.146l1.5 1.5H14a2 2 0 0 1 2 2v5.5A1.5 1.5 0 0 1 14.5 14H1.5A1.5 1.5 0 0 1 0 12.5V4a2 2 0 0 1 2-2h3.5l1 1H9.828z','text-dark')
+      ] %}
+        <div class="col-md-4 col-sm-6">
+          <a href="{{ url_for(card[0]) }}" class="text-decoration-none">
+            <div class="card widget-card text-center p-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 {{ card[3] }}" viewBox="0 0 16 16">
+                <path d="{{ card[2] }}"/>
+              </svg>
+              <h5 class="card-title">{{ card[1] }}</h5>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
     {% endif %}
   </div>
 </div>
 
 <style>
+  .fade-in {
+    animation: fadeInUp 0.8s ease both;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   .widget-card {
-    border-radius: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(6px);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
   }
+
   .widget-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   }
+
+  .widget-card h5 {
+    font-weight: 600;
+    color: #333;
+  }
+
   svg {
     display: block;
     margin: 0 auto;
   }
 </style>
+
+<script>
+  document.querySelectorAll('.widget-card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.classList.add('active');
+      setTimeout(() => card.classList.remove('active'), 200);
+    });
+  });
+</script>
 {% endblock %}

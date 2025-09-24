@@ -1,20 +1,33 @@
 {% extends "layout.html" %}
+
 {% block content %}
 <div class="content-card">
   <h2 class="mb-4">Review Leave #{{ leave.id }}</h2>
 
   <div class="mb-3">
     <p><strong>Applicant:</strong> {{ leave.applicant.full_name or leave.applicant.username }}</p>
+    <p><strong>Department:</strong> {{ leave.requester.department.name if leave.requester.department else "N/A" }}</p>
     <p><strong>Start:</strong> {{ leave.start_date }} &nbsp; — &nbsp; <strong>End:</strong> {{ leave.end_date }}</p>
     <p><strong>Reason:</strong><br>{{ leave.reason }}</p>
   </div>
 
   <hr>
 
+  <!-- Show faculty comment to HOD -->
+  {% if leave.status == 'FACULTY_APPROVED' and current_user.role == 'hod' %}
+  <div class="alert alert-info">
+    <strong>Faculty Comment:</strong><br>
+    {{ leave.review_comment or "No comment provided by faculty." }}
+  </div>
+  {% endif %}
+
+  <!-- Only show comment form if user can submit review -->
+  {% if (current_user.role == 'faculty' and leave.status == 'PENDING') or 
+        (current_user.role == 'hod' and leave.status == 'FACULTY_APPROVED') %}
   <form method="post">
     <div class="mb-3">
       <label for="comment" class="form-label">Comment (optional)</label>
-      <textarea name="comment" id="comment" rows="4" class="form-control"></textarea>
+      <textarea name="comment" id="comment" rows="4" class="form-control">{{ leave.review_comment or "" }}</textarea>
     </div>
 
     <div class="d-flex gap-2">
@@ -22,5 +35,6 @@
       <button name="action" value="REJECT" type="submit" class="btn btn-danger">Reject</button>
     </div>
   </form>
+  {% endif %}
 </div>
 {% endblock %}

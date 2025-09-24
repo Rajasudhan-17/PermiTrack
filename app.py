@@ -12,12 +12,22 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 from flask_migrate import Migrate
 from flask_login import UserMixin
-
-
-
-
+from flask_mail import Mail, Message
+from flask_apscheduler import APScheduler
 
 app = Flask(__name__)
+from flask_mail import Mail, Message
+from flask_apscheduler import APScheduler
+
+# Mail configuration (example with Gmail SMTP)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'permitrack.application@gmail.com'
+app.config['MAIL_PASSWORD'] = 'deps fjwz cowk hoyc' 
+
+mail = Mail(app)
+
 app.config['SECRET_KEY'] = os.environ.get('LEAVE_SECRET', 'dev-secret-change-this')
 
 # MySQL DB URI - change credentials as required
@@ -39,6 +49,17 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+def send_email(subject, recipients, body):
+    with app.app_context():
+        msg = Message(
+            subject=subject,
+            sender=app.config['MAIL_USERNAME'],
+            recipients=recipients,
+            body=body
+        )
+        mail.send(msg)
+
 
 
 # ------------------ MODELS ------------------
@@ -195,7 +216,7 @@ def login():
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password.', 'danger')
-    return render_template('login.html')
+    return render_template('index.html')
 
 
 @app.route('/logout')
@@ -262,6 +283,7 @@ def admin_create_user():
     if request.method == 'POST':
         full_name = request.form.get('full_name', '').strip()
         username = request.form.get('username', '').strip()
+        register_number = request.form.get('register_number')
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         role = request.form.get('role', 'student')
@@ -433,7 +455,7 @@ def my_ods():
 
         new_od = OD(
         requested_by=current_user.id,
-        faculty_id=assigned_faculty_id,   # ✅ set faculty
+        faculty_id=assigned_faculty_id,
         event_date=event_date,
         reason=reason,
         proof_filename=proof_filename,
@@ -554,8 +576,8 @@ def inject_pending_count():
 @login_required
 def review_od(od_id):
     od = OD.query.get_or_404(od_id)
+    student = User.query.get(od.requested_by)
 
-    # Role checks
     if current_user.role == 'faculty' and od.status != 'PENDING':
         flash('Faculty can only review pending ODs.', 'danger')
         return redirect(url_for('pending_od'))
@@ -576,22 +598,71 @@ def review_od(od_id):
             flash('Invalid action', 'danger')
             return redirect(url_for('review_od', od_id=od_id))
 
+        approver_name = current_user.full_name
+        approver_role = current_user.role.upper()
+        # Try to get faculty department from direct assignment or from class
+        if current_user.department:
+            approver_department = current_user.department.name
+        elif current_user.assigned_classes:
+            # Use the department of the first assigned class
+            approver_department = current_user.assigned_classes[0].department.name if current_user.assigned_classes[0].department else "N/A"
+        else:
+            approver_department = "N/A"
+
+
         if action == 'APPROVE':
             if current_user.role == 'faculty':
                 od.status = 'FACULTY_APPROVED'
-                od.approved_by = None  # ✅ final approver not set yet
+                od.approved_by = None
+                send_email(
+                    "OD Forwarded to HOD",
+                    [student.email],
+                    f"""Dear {student.full_name},
+
+Your OD request on {od.event_date} has been **approved by Faculty**: {approver_name}, {approver_department} department.
+It has now been forwarded to the HOD for final approval.
+
+Comment: {comment}
+
+Regards,
+Easwari Engineering College
+"""
+                )
             elif current_user.role == 'hod':
                 od.status = 'APPROVED'
-                od.approved_by = current_user.id  # ✅ final approver
-        else:
+                od.approved_by = current_user.id
+                send_email(
+                    "OD Approved by HOD",
+                    [student.email],
+                    f"""Dear {student.full_name},
+
+Your OD request on {od.event_date} has been **approved by HOD**: {approver_name}, Head of {approver_department} Department.
+
+Comment: {comment}
+
+Regards,
+Easwari Engineering College
+"""
+                )
+        else:  # REJECT
             od.status = 'REJECTED'
-            od.approved_by = current_user.id  # ✅ whoever rejected
+            od.approved_by = current_user.id
+            send_email(
+                "OD Rejected",
+                [student.email],
+                f"""Dear {student.full_name},
 
-        # Always store review info
+Your OD request on {od.event_date} has been **rejected** by {approver_role}: {approver_name}, {approver_department} Department.
+
+Comment: {comment}
+
+Regards,
+Easwari Engineering College
+"""
+            )
+
         od.review_comment = comment
-        od.reviewed_by = current_user.id
         od.reviewed_on = datetime.utcnow()
-
         db.session.commit()
         flash(f'OD {od.status}', 'success')
         return redirect(url_for('pending_od'))
@@ -672,17 +743,24 @@ def pending():
 @app.route('/review/<int:leave_id>', methods=['GET', 'POST'])
 @login_required
 def review(leave_id):
+    leave = Leave.query.get_or_404(leave_id)
+    student = User.query.get(leave.requested_by)
+    department = student.department.name if student.department else "N/A"
+
+    # Determine faculty and HOD
+    faculty = User.query.get(leave.approved_by) if leave.approved_by else None
+    hod = None
+    if current_user.role == 'hod':
+        hod = current_user
+
     if current_user.role not in ('faculty', 'hod'):
         flash('Unauthorized', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('pending'))
 
-    leave = Leave.query.get_or_404(leave_id)
-
-    # Faculty can only review PENDING
+    # Role-based status check
     if current_user.role == 'faculty' and leave.status != 'PENDING':
         flash('Faculty can only review pending leaves.', 'danger')
         return redirect(url_for('pending'))
-    # HOD can only review FACULTY_APPROVED
     if current_user.role == 'hod' and leave.status != 'FACULTY_APPROVED':
         flash('HOD can only review faculty-approved leaves.', 'danger')
         return redirect(url_for('pending'))
@@ -695,28 +773,78 @@ def review(leave_id):
             flash('Invalid action', 'danger')
             return redirect(url_for('review', leave_id=leave_id))
 
+        # APPROVE action
         if action == 'APPROVE':
             if current_user.role == 'faculty':
-                # faculty gives preliminary approval -> escalate to HOD
                 leave.status = 'FACULTY_APPROVED'
                 leave.approved_by = current_user.id
+                approver_name = current_user.full_name
+                # Try to get faculty department from direct assignment or from class
+                if current_user.department:
+                    approver_department = current_user.department.name
+                elif current_user.assigned_classes:
+                    # Use the department of the first assigned class
+                    approver_department = current_user.assigned_classes[0].department.name if current_user.assigned_classes[0].department else "N/A"
+                else:
+                    approver_department = "N/A"
+
+                send_email(
+                    "Leave Forwarded to HOD",
+                    [student.email],
+                    f"""Dear {student.full_name},
+
+Your leave request from {leave.start_date} to {leave.end_date} has been **approved by Faculty**: {approver_name}, {approver_department} department.
+It has now been forwarded to the HOD for final approval.
+
+Comment: {comment}
+
+Regards,
+Easwari Engineering College
+"""
+                )
             elif current_user.role == 'hod':
-                # final approval -> deduct leave balance
+                # Final approval
                 days = (leave.end_date - leave.start_date).days + 1
-                student = User.query.get(leave.requested_by)
-                if not student:
-                    flash('Applicant not found', 'danger')
-                    return redirect(url_for('pending'))
                 if student.leave_balance < days:
-                    flash(f"Student doesn't have enough balance ({student.leave_balance})", 'danger')
+                    flash(f"Student doesn't have enough leave balance ({student.leave_balance})", 'danger')
                     return redirect(url_for('review', leave_id=leave_id))
                 student.leave_balance -= days
                 leave.status = 'APPROVED'
                 leave.approved_by = current_user.id
-        else:
-            # REJECT by faculty/HOD
+                approver_name = current_user.full_name
+                send_email(
+                    "Leave Approved by HOD",
+                    [student.email],
+                    f"""Dear {student.full_name},
+
+Your leave request from {leave.start_date} to {leave.end_date} has been **approved by HOD**: {approver_name}, Head of {department} Department.
+
+Comment: {comment}
+
+Please ensure that you complete any missed lectures or assignments.
+
+Regards,
+Easwari Engineering College
+"""
+                )
+        else:  # REJECT
             leave.status = 'REJECTED'
             leave.approved_by = current_user.id
+            approver_name = current_user.full_name
+            approver_role = current_user.role.upper()
+            send_email(
+                "Leave Rejected",
+                [student.email],
+                f"""Dear {student.full_name},
+
+Your leave request from {leave.start_date} to {leave.end_date} has been **rejected** by {approver_role}: {approver_name}, {department} Department.
+
+Comment: {comment}
+
+Regards,
+Easwari Engineering College
+"""
+            )
 
         leave.review_comment = comment
         leave.reviewed_on = datetime.utcnow()
@@ -725,6 +853,7 @@ def review(leave_id):
         return redirect(url_for('pending'))
 
     return render_template('review.html', leave=leave)
+
 
 
 # -------- ADMIN: assign HOD to a dept or faculty to a class (alternate routes) --------
@@ -867,6 +996,41 @@ def initdb():
 def admin_all_leaves():
     leaves = Leave.query.order_by(Leave.applied_on.desc()).all()
     return render_template('admin_all_leaves.html', leaves=leaves)
+
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
+
+@scheduler.task('cron', id='daily_summary', hour=15, minute=30)  # 3:30 PM daily
+def send_daily_summary():
+    with app.app_context():
+        faculties = User.query.filter_by(role='faculty').all()
+        hods = User.query.filter_by(role='hod').all()
+
+        # Notify faculty about pending ODs and leaves
+        for fac in faculties:
+            pending_ods = OD.query.filter_by(faculty_id=fac.id, status='PENDING').count()
+            pending_leaves = (Leave.query
+                .join(ClassGroup, ClassGroup.id == User.class_group_id)
+                .filter(ClassGroup.faculty_id == fac.id, Leave.status == 'PENDING')
+                .count())
+            
+            if pending_ods or pending_leaves:
+                body = f"Hello {fac.full_name},\n\nYou have:\n- {pending_ods} OD requests\n- {pending_leaves} Leave requests\npending for review."
+                send_email("Daily Pending Applications", [fac.email], body)
+
+        # Notify HOD about pending ODs and leaves
+        for hod in hods:
+            pending_ods = OD.query.filter_by(status='FACULTY_APPROVED').count()
+            pending_leaves = (Leave.query
+                .join(User, User.department_id == hod.department_id)
+                .filter(Leave.status == 'FACULTY_APPROVED')
+                .count())
+
+            if pending_ods or pending_leaves:
+                body = f"Hello {hod.full_name},\n\nYou have:\n- {pending_ods} OD requests\n- {pending_leaves} Leave requests\nwaiting for your review."
+                send_email("Daily Pending Applications", [hod.email], body)
+
 
 # -------- RUN APP --------
 if __name__ == '__main__':
