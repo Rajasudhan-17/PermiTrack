@@ -120,34 +120,22 @@ MAIL_PASSWORD=your-app-password
 MAIL_DELIVERY_MODE=queue
 ```
 
-#### Using SendGrid (Recommended for Production & Render)
+#### Using Simple SMTP
 
-SendGrid is more reliable and works better on Render than direct SMTP.
+You can use any SMTP provider that supports username/password authentication.
 
-**Setup**:
-1. Create free account at [sendgrid.com](https://sendgrid.com)
-2. Go to **Settings → API Keys** and create an API key
-3. Add to `.env`:
+Example `.env` file:
 
 ```
-MAIL_SERVER=smtp.sendgrid.net
+MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USE_TLS=true
 MAIL_USE_SSL=false
-MAIL_USERNAME=apikey
-MAIL_PASSWORD=SG.your-api-key-here
-MAIL_DEFAULT_SENDER=noreply@yourdomain.com
-MAIL_DELIVERY_MODE=queue
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=your-email@gmail.com
+MAIL_DELIVERY_MODE=sync
 ```
-
-**On Render Dashboard**:
-- Add these same environment variables
-- The `apikey` username is literal (not your actual API key)
-- `MAIL_PASSWORD` is your SendGrid API key (starts with `SG.`)
-
-**Email Delivery**:
-- `MAIL_DELIVERY_MODE=queue` is recommended for production (emails sent async)
-- `MAIL_DELIVERY_MODE=sync` sends immediately but fails if SMTP is unavailable (now has fallback to queue)
 
 The app automatically loads environment variables from the `.env` file.
 
@@ -190,8 +178,12 @@ INITDB_TOKEN=your-init-token
 
 **Important**: For emails to work on Render, you must configure:
 
-- `MAIL_USERNAME`: Your Gmail address
-- `MAIL_PASSWORD`: Your Gmail app password (not regular password)
+- `MAIL_SERVER`: Your SMTP server hostname
+- `MAIL_PORT`: Usually `587`
+- `MAIL_USE_TLS`: Usually `true`
+- `MAIL_USERNAME`: Your SMTP username
+- `MAIL_PASSWORD`: Your SMTP password or app password
+- `MAIL_DEFAULT_SENDER`: A valid sender address for that SMTP account
 - `MAIL_DELIVERY_MODE`: Set to `sync` for immediate sending
 
 **Gmail Setup**:

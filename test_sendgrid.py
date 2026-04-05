@@ -10,24 +10,26 @@ with app.app_context():
     from leave_app.services.emailing import send_email_now
 
     try:
-        if not app.config.get("SENDGRID_API_KEY"):
-            raise RuntimeError("SENDGRID_API_KEY is not configured.")
-        recipient = app.config.get("SENDGRID_TEST_RECIPIENT") or app.config.get("MAIL_DEFAULT_SENDER")
-        if not app.config.get("MAIL_DEFAULT_SENDER"):
-            raise RuntimeError("MAIL_DEFAULT_SENDER is not configured.")
+        recipient = app.config.get("SMTP_TEST_RECIPIENT") or app.config.get("MAIL_DEFAULT_SENDER")
+        if not app.config.get("MAIL_SERVER"):
+            raise RuntimeError("MAIL_SERVER is not configured.")
+        if not app.config.get("MAIL_USERNAME"):
+            raise RuntimeError("MAIL_USERNAME is not configured.")
+        if not app.config.get("MAIL_PASSWORD"):
+            raise RuntimeError("MAIL_PASSWORD is not configured.")
         if not recipient:
-            raise RuntimeError("No recipient configured. Set SENDGRID_TEST_RECIPIENT or MAIL_DEFAULT_SENDER.")
+            raise RuntimeError("No recipient configured. Set SMTP_TEST_RECIPIENT or MAIL_DEFAULT_SENDER.")
 
         send_email_now(
-            subject="SendGrid Test Email",
+            subject="SMTP Test Email",
             recipients=[recipient],
             body=(
-                "This email was sent using the SendGrid API.\n\n"
-                "If you receive this, SendGrid is properly configured."
+                "This email was sent using the configured SMTP server.\n\n"
+                "If you receive this, SMTP is working correctly."
             ),
         )
-        print("SendGrid email request completed successfully.")
+        print("SMTP email request completed successfully.")
         print(f"Delivery mode: {app.config.get('MAIL_DELIVERY_MODE')}")
-        print(f"Data residency: {app.config.get('SENDGRID_DATA_RESIDENCY', 'global')}")
+        print(f"SMTP server: {app.config.get('MAIL_SERVER')}")
     except Exception as exc:
         print(f"Failed to send email: {exc}")

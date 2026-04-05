@@ -174,8 +174,6 @@ class BaseConfig:
     MAIL_DELIVERY_MODE = os.environ.get("MAIL_DELIVERY_MODE", "queue")
     EMAIL_BATCH_SIZE = env_int("EMAIL_BATCH_SIZE", 50)
     EMAIL_MAX_RETRIES = env_int("EMAIL_MAX_RETRIES", 5)
-    SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
-    SENDGRID_DATA_RESIDENCY = os.environ.get("SENDGRID_DATA_RESIDENCY", "global")
 
     STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
     LOCAL_UPLOAD_ROOT = os.path.join(BASE_DIR, "uploads")
