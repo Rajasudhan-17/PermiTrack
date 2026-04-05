@@ -17,8 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('users', sa.Column('faculty_id', sa.Integer(), nullable=True))
+    op.add_column('user', sa.Column('faculty_id', sa.Integer(), nullable=True))
     op.create_foreign_key('fk_user_faculty', 'user', 'user', ['faculty_id'], ['id'])
 def downgrade():
-    op.drop_column('users', 'faculty_id')
+    op.drop_column('user', 'faculty_id')
     op.drop_constraint('fk_user_faculty', 'user', type_='foreignkey')
