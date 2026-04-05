@@ -16,13 +16,26 @@ services:
       # Database Configuration (Update these with your actual database details)
       - key: DATABASE_URL
         value: mysql+pymysql://user:password@host:port/database
-      # Email Configuration (Update these with your actual email credentials)
+      # Email Configuration - Using SendGrid (RECOMMENDED for Render)
+      # 1. Get API key from https://sendgrid.com (free account, 100 emails/day)
+      # 2. Go to Settings → API Keys → Create API Key
+      # 3. Copy the key (starts with SG.) and paste in MAIL_PASSWORD below
+      - key: MAIL_SERVER
+        value: smtp.sendgrid.net
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USE_TLS
+        value: "true"
+      - key: MAIL_USE_SSL
+        value: "false"
       - key: MAIL_USERNAME
-        value: your-email@gmail.com
+        value: apikey
       - key: MAIL_PASSWORD
-        value: your-app-password
+        value: ${SENDGRID_API_KEY}
+      - key: MAIL_DEFAULT_SENDER
+        value: noreply@permitrack.com
       - key: MAIL_DELIVERY_MODE
-        value: sync
+        value: queue
       # Storage Configuration (for file uploads)
       - key: STORAGE_BACKEND
         value: local  # or s3, oci for production
