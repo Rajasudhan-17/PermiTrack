@@ -1,60 +1,67 @@
 {% extends "layout.html" %}
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-12">
-        <div class="content-card">
-            <h2 class="mb-4 text-center">All Leaves</h2>
+{% block title %}All Leaves{% endblock %}
 
-            {% if leaves %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Applicant</th>
-                            <th>Role</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Applied On</th>
-                            <th>Reviewed By</th>
-                            <th>Review Comment</th>
-                            <th>Reviewed On</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for leave in leaves %}
-                        <tr>
-                            <td>{{ leave.id }}</td>
-                            <td>{{ leave.requester.full_name }}</td>
-                            <td>{{ leave.requester.role|capitalize }}</td>
-                            <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
-                            <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
-                            <td>
-                                {% if leave.status == 'PENDING' %}
-                                    <span class="badge bg-warning text-dark">{{ leave.status }}</span>
-                                {% elif leave.status == 'FACULTY_APPROVED' %}
-                                    <span class="badge bg-info text-dark">{{ leave.status }}</span>
-                                {% elif leave.status == 'APPROVED' %}
-                                    <span class="badge bg-success">{{ leave.status }}</span>
-                                {% elif leave.status == 'REJECTED' %}
-                                    <span class="badge bg-danger">{{ leave.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ leave.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td>{{ leave.approver.full_name if leave.approver else '-' }}</td>
-                            <td>{{ leave.review_comment if leave.review_comment else '-' }}</td>
-                            <td>{{ leave.reviewed_on.strftime('%Y-%m-%d %H:%M') if leave.reviewed_on else '-' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="alert alert-info text-center mt-3">No leaves found.</div>
-            {% endif %}
-        </div>
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>All Leave Requests</h1>
+      <p class="section-note mb-0">Full administrative view of every leave request in the system.</p>
     </div>
-</div>
+  </div>
+
+  {% if leaves %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Applicant</th>
+            <th>Role</th>
+            <th>Dates</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Applied On</th>
+            <th>Reviewed By</th>
+            <th>Proof</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leave in leaves %}
+            <tr>
+              <td>{{ leave.id }}</td>
+              <td>{{ leave.requester.full_name or leave.requester.username }}</td>
+              <td>{{ leave.requester.role|capitalize }}</td>
+              <td>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+              <td>
+                {% if leave.is_emergency %}
+                  <span class="badge bg-danger">Emergency</span>
+                {% else %}
+                  <span class="badge bg-secondary">Standard</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
+              <td>{{ leave.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ leave.approver.full_name if leave.approver else '-' }}</td>
+              <td>
+                {% if leave.proof_filename %}
+                  <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                {% elif leave.is_emergency %}
+                  <span class="text-warning fw-semibold">Pending</span>
+                {% else %}
+                  <span class="muted-text">Not required</span>
+                {% endif %}
+              </td>
+              <td>{{ leave.review_comment or '-' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No leave requests found.</div>
+  {% endif %}
+</section>
 {% endblock %}

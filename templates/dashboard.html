@@ -1,158 +1,174 @@
 {% extends "layout.html" %}
 
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-  <div class="text-center mb-5 fade-in">
-    <h2 class="fw-bold">Welcome, {{ current_user.username }}</h2>
-    <p class="lead">Role: {{ current_user.role|capitalize }}</p>
-    <p class="text-muted">Please click on the widgets below:</p>
+<section class="hero-panel mb-4">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow mb-3">Dashboard</p>
+      <h1 class="page-title">Welcome, {{ current_user.full_name or current_user.username }}</h1>
+      <p class="page-subtitle mb-0">
+        You are signed in as <strong>{{ current_user.role|upper }}</strong>.
+        {% if current_user.role == 'student' %}
+          Track your requests, balances, and OD proofs from one place.
+        {% elif current_user.role in ['faculty', 'hod'] %}
+          Review pending requests quickly and keep your department moving.
+        {% else %}
+          Configure the full system from departments to approval ownership.
+        {% endif %}
+      </p>
+    </div>
   </div>
 
-  <div class="row g-4 fade-in">
+  <div class="metric-grid mt-4">
+    <div class="metric-card">
+      <span class="metric-label">
+        {% if current_user.role == 'admin' %}
+          Total Users
+        {% else %}
+          Leave Balance
+        {% endif %}
+      </span>
+      <span class="metric-value">
+        {% if current_user.role == 'admin' %}
+          {{ admin_user_count }}
+        {% else %}
+          {{ current_user.leave_balance }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="metric-card">
+      {% if current_user.role == 'admin' %}
+        <span class="metric-label">Departments / Classes</span>
+        <span class="metric-value">{{ admin_department_count }} / {{ admin_class_count }}</span>
+      {% else %}
+        <span class="metric-label">
+          {% if current_user.role == 'faculty' %}
+            Leaves Waiting
+          {% elif current_user.role == 'hod' %}
+            Dept Leaves Waiting
+          {% else %}
+            Leaves Applied
+          {% endif %}
+        </span>
+        <span class="metric-value">{{ pending_leave_count if current_user.role in ['faculty', 'hod'] else applied_leave_count }}</span>
+      {% endif %}
+    </div>
+    <div class="metric-card">
+      {% if current_user.role == 'admin' %}
+        <span class="metric-label">Leaves / ODs</span>
+        <span class="metric-value">{{ admin_leave_count }} / {{ admin_od_count }}</span>
+      {% else %}
+        <span class="metric-label">
+          {% if current_user.role == 'faculty' %}
+            ODs Waiting
+          {% elif current_user.role == 'hod' %}
+            Dept ODs Waiting
+          {% else %}
+            ODs Applied
+          {% endif %}
+        </span>
+        <span class="metric-value">{{ pending_od_count if current_user.role in ['faculty', 'hod'] else applied_od_count }}</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h2>Quick actions</h2>
+      <p class="section-note mb-0">Jump straight into the tasks that matter for your role.</p>
+    </div>
+  </div>
+
+  <div class="action-grid">
     {% if current_user.role == 'student' %}
-      <!-- My Leaves -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('my_leaves') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-primary" viewBox="0 0 16 16">
-              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h.5A1.5 1.5 0 0 1 15 2.5V4H1V2.5A1.5 1.5 0 0 1 2.5 1H3v-.5a.5.5 0 0 1 .5-.5zM1 5h14v8.5A1.5 1.5 0 0 1 13.5 15h-11A1.5 1.5 0 0 1 1 13.5V5z"/>
-            </svg>
-            <h5 class="card-title">My Leaves</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Apply Leave -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('apply_leave') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-success" viewBox="0 0 16 16">
-              <path d="M12.854.146a.5.5 0 0 1 .11.638l-.057.07-10 10L2 13l2.146-1.146 10-10a.5.5 0 0 1 .708.708l-10 10a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.65-.65l1-3a.5.5 0 0 1 .11-.168l10-10a.5.5 0 0 1 .707 0z"/>
-            </svg>
-            <h5 class="card-title">Apply Leave</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Apply OD -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('apply_od') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-warning" viewBox="0 0 16 16">
-              <path d="M6.5 0a1 1 0 0 0-1 1v1H2a2 2 0 0 0-2 2v1h16V4a2 2 0 0 0-2-2h-3.5V1a1 1 0 0 0-1-1h-3zM0 6v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6H0zm6.5-5h3a.5.5 0 0 1 .5.5V2h-4V1.5a.5.5 0 0 1 .5-.5z"/>
-            </svg>
-            <h5 class="card-title">Apply OD</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- My ODs -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('my_ods') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-info" viewBox="0 0 16 16">
-              <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5v1A1.5 1.5 0 0 0 2.5 6h11A1.5 1.5 0 0 0 15 4.5v-1A1.5 1.5 0 0 0 13.5 2h-11zm0 1h11a.5.5 0 0 1 .5.5V4h-12v-.5a.5.5 0 0 1 .5-.5z"/>
-              <path d="M3 7v6.5A1.5 1.5 0 0 0 4.5 15h7A1.5 1.5 0 0 0 13 13.5V7H3zm4.5 2a.5.5 0 0 1 .5.5V11h-1V9.5a.5.5 0 0 1 .5-.5z"/>
-            </svg>
-            <h5 class="card-title">My ODs</h5>
-          </div>
-        </a>
-      </div>
-    {% endif %}
-
-    {% if current_user.role in ['faculty','hod'] %}
-      <!-- Pending Leaves -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('pending') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-danger" viewBox="0 0 16 16">
-              <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
-              <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 0 1 1.06-1.06L7 8.293l3.97-3.322z"/>
-            </svg>
-            <h5 class="card-title">Pending Leaves</h5>
-          </div>
-        </a>
-      </div>
-
-      <!-- Pending ODs -->
-      <div class="col-md-4 col-sm-6">
-        <a href="{{ url_for('pending_od') }}" class="text-decoration-none">
-          <div class="card widget-card text-center p-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 text-dark" viewBox="0 0 16 16">
-              <path d="M10 1.5v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1A.5.5 0 0 1 6.5 1h3a.5.5 0 0 1 .5.5zM9.5 2h-3v1h3V2z"/>
-            </svg>
-            <h5 class="card-title">Pending ODs</h5>
-          </div>
-        </a>
-      </div>
-    {% endif %}
-
-    {% if current_user.role == 'admin' %}
-      {% for card in [
-        ('create_department','Departments','M6 1v14H2V1h4zm8 0v14h-4V1h4zM1 15h14v1H1v-1z','text-primary'),
-        ('create_class','Classes','M2 2h12v2H2V2zm0 5h12v2H2V7zm0 5h12v2H2v-2z','text-success'),
-        ('admin_create_user','Users','M3 14s-1 0-1-1 1-4 6-4 6 4 6 4-1 1-1 1H3zm6-6a3 3 0 1 0-6 0 3 3 0 0 0 6 0z','text-warning'),
-        ('assign_hod','Assign HOD','M6 8a3 3 0 1 1 6 0A3 3 0 0 1 6 8z M14 14s-1-3-6-3-6 3-6 3v1h12v-1z','text-danger'),
-        ('assign_faculty','Assign Faculty','M8 7a3 3 0 1 0-6 0 3 3 0 0 0 6 0zM5 14s-1 0-1-1 1-4 4-4 4 3 4 4-1 1-1 1H5zm7-5v-2h-1v2h-2v1h2v2h1v-2h2v-1h-2z','text-info'),
-        ('admin_all_leaves','All Leaves','M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6l-6-6H4z','text-secondary'),
-        ('admin_all_ods','All ODs','M9.828 4a.5.5 0 0 1 .354.146l1.5 1.5H14a2 2 0 0 1 2 2v5.5A1.5 1.5 0 0 1 14.5 14H1.5A1.5 1.5 0 0 1 0 12.5V4a2 2 0 0 1 2-2h3.5l1 1H9.828z','text-dark')
-      ] %}
-        <div class="col-md-4 col-sm-6">
-          <a href="{{ url_for(card[0]) }}" class="text-decoration-none">
-            <div class="card widget-card text-center p-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="mb-3 {{ card[3] }}" viewBox="0 0 16 16">
-                <path d="{{ card[2] }}"/>
-              </svg>
-              <h5 class="card-title">{{ card[1] }}</h5>
-            </div>
-          </a>
-        </div>
-      {% endfor %}
+      <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
+        <div class="dashboard-icon">L</div>
+        <h3>Apply Leave</h3>
+        <p>Submit a new leave request with date validation and instant feedback.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
+        <div class="dashboard-icon">M</div>
+        <h3>My Leaves</h3>
+        <p>See all leave requests, statuses, and reviewer comments in one table.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.apply_od') }}">
+        <div class="dashboard-icon">O</div>
+        <h3>Apply OD</h3>
+        <p>Upload proof and send your OD request through the proper approval chain.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.my_ods') }}">
+        <div class="dashboard-icon">T</div>
+        <h3>Track ODs</h3>
+        <p>Review every OD request, proof upload, and final outcome.</p>
+      </a>
+    {% elif current_user.role == 'faculty' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
+        <div class="dashboard-icon">L</div>
+        <h3>Apply Leave</h3>
+        <p>Create your own leave request with the same validation workflow as students.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
+        <div class="dashboard-icon">M</div>
+        <h3>My Leaves</h3>
+        <p>Track your own leave requests and comments separately from review work.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
+        <div class="dashboard-icon">R</div>
+        <h3>Review Leaves</h3>
+        <p>Open pending leave requests that belong to your review queue.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Handle pending OD approvals with proof access and comments.</p>
+      </a>
+    {% elif current_user.role == 'hod' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
+        <div class="dashboard-icon">R</div>
+        <h3>Review Leaves</h3>
+        <p>Open pending leave requests that belong to your review queue.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Handle pending OD approvals with proof access and comments.</p>
+      </a>
+    {% elif current_user.role == 'admin' %}
+      <a class="dashboard-link" href="{{ url_for('admin.create_department') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Departments</h3>
+        <p>Create departments and keep HOD assignments organized.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.create_class') }}">
+        <div class="dashboard-icon">C</div>
+        <h3>Classes</h3>
+        <p>Create class groups and wire them into the approval structure.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.admin_create_user') }}">
+        <div class="dashboard-icon">U</div>
+        <h3>Users</h3>
+        <p>Create students, faculty, HODs, and admins with the correct assignments.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.assign_faculty') }}">
+        <div class="dashboard-icon">F</div>
+        <h3>Assign Faculty</h3>
+        <p>Connect classes to faculty reviewers so requests route properly.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.assign_hod') }}">
+        <div class="dashboard-icon">H</div>
+        <h3>Assign HOD</h3>
+        <p>Map each department to its final approver.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.admin_all_leaves') }}">
+        <div class="dashboard-icon">A</div>
+        <h3>Audit Leaves</h3>
+        <p>Review all leave activity across the application.</p>
+      </a>
     {% endif %}
   </div>
-</div>
-
-<style>
-  .fade-in {
-    animation: fadeInUp 0.8s ease both;
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .widget-card {
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-
-  .widget-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  }
-
-  .widget-card h5 {
-    font-weight: 600;
-    color: #333;
-  }
-
-  svg {
-    display: block;
-    margin: 0 auto;
-  }
-</style>
-
-<script>
-  document.querySelectorAll('.widget-card').forEach(card => {
-    card.addEventListener('click', () => {
-      card.classList.add('active');
-      setTimeout(() => card.classList.remove('active'), 200);
-    });
-  });
-</script>
+</section>
 {% endblock %}

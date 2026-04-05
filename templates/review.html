@@ -1,40 +1,72 @@
 {% extends "layout.html" %}
 
+{% block title %}Review Leave{% endblock %}
+
 {% block content %}
-<div class="content-card">
-  <h2 class="mb-4">Review Leave #{{ leave.id }}</h2>
-
-  <div class="mb-3">
-    <p><strong>Applicant:</strong> {{ leave.applicant.full_name or leave.applicant.username }}</p>
-    <p><strong>Department:</strong> {{ leave.requester.department.name if leave.requester.department else "N/A" }}</p>
-    <p><strong>Start:</strong> {{ leave.start_date }} &nbsp; — &nbsp; <strong>End:</strong> {{ leave.end_date }}</p>
-    <p><strong>Reason:</strong><br>{{ leave.reason }}</p>
+<section class="content-card mx-auto" style="max-width: 860px;">
+  <div class="page-heading">
+    <div>
+      <h1>Review Leave #{{ leave.id }}</h1>
+      <p class="section-note mb-0">Check the request details and record a decision with an optional comment.</p>
+    </div>
+    <span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span>
   </div>
 
-  <hr>
+  <div class="info-list mb-4">
+    <div class="info-row">
+      <div class="info-label">Applicant</div>
+      <div>{{ leave.requester.full_name or leave.requester.username }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Department</div>
+      <div>{{ leave.requester.department.name if leave.requester.department else 'N/A' }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Leave Dates</div>
+      <div>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Priority</div>
+      <div>
+        {% if leave.is_emergency %}
+          Emergency leave
+        {% else %}
+          Standard leave
+        {% endif %}
+      </div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Reason</div>
+      <div>{{ leave.reason }}</div>
+    </div>
+    {% if leave.is_emergency %}
+      <div class="info-row">
+        <div class="info-label">Supporting Proof</div>
+        <div>
+          {% if leave.proof_filename %}
+            <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Open proof</a>
+          {% else %}
+            <span class="text-warning fw-semibold">Pending upload from applicant</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
 
-  <!-- Show faculty comment to HOD -->
   {% if leave.status == 'FACULTY_APPROVED' and current_user.role == 'hod' %}
-  <div class="alert alert-info">
-    <strong>Faculty Comment:</strong><br>
-    {{ leave.review_comment or "No comment provided by faculty." }}
-  </div>
+    <div class="alert alert-info mb-4">Faculty comment: {{ leave.review_comment or 'No comment provided.' }}</div>
   {% endif %}
 
-  <!-- Only show comment form if user can submit review -->
-  {% if (current_user.role == 'faculty' and leave.status == 'PENDING') or 
-        (current_user.role == 'hod' and leave.status == 'FACULTY_APPROVED') %}
   <form method="post">
-    <div class="mb-3">
-      <label for="comment" class="form-label">Comment (optional)</label>
-      <textarea name="comment" id="comment" rows="4" class="form-control">{{ leave.review_comment or "" }}</textarea>
-    </div>
+    {{ csrf_input() }}
+    <label for="comment" class="form-label">Comment</label>
+    <textarea name="comment" id="comment" rows="4" class="form-control" placeholder="Add context for the applicant">{{ leave.review_comment or '' }}</textarea>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 mt-4">
       <button name="action" value="APPROVE" type="submit" class="btn btn-success">Approve</button>
       <button name="action" value="REJECT" type="submit" class="btn btn-danger">Reject</button>
+      <a href="{{ url_for('leaves.pending') }}" class="btn btn-secondary">Back</a>
     </div>
   </form>
-  {% endif %}
-</div>
+</section>
 {% endblock %}

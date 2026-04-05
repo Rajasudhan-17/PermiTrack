@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Emergency Proof{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 760px;">
+  <div class="page-heading">
+    <div>
+      <h1>Upload Emergency Leave Proof</h1>
+      <p class="section-note mb-0">Attach the medical or emergency proof for leave #{{ leave.id }}.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    Emergency leave requests can be submitted quickly first, but supporting proof is still required afterward.
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ csrf_input() }}
+    <div class="mb-3">
+      <label for="proof" class="form-label">Proof document</label>
+      <input type="file" id="proof" name="proof" class="form-control" accept=".png,.jpg,.jpeg,.gif,.pdf" required>
+      <div class="form-text text-light-emphasis">Accepted formats: PNG, JPG, GIF, PDF.</div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Upload proof</button>
+      <a href="{{ url_for('leaves.my_leaves') }}" class="btn btn-secondary">Back to my leaves</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

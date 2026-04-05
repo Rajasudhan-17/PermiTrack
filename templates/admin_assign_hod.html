@@ -1,63 +1,72 @@
-<!-- templates/admin_assign_hod.html -->
 {% extends "layout.html" %}
 
 {% block title %}Assign HOD{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Assign HOD to Department</h2>
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>Assign HOD</h1>
+      <p class="section-note mb-0">Link each department to the correct HOD account for final approvals.</p>
+    </div>
+  </div>
 
-
-    <!-- Assign HOD form -->
-    <form method="POST" action="{{ url_for('assign_hod') }}">
-        <div class="mb-3">
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="section-card">
+        <h3 class="mb-3">Assignment form</h3>
+        <form method="post">
+          {{ csrf_input() }}
+          <div class="mb-3">
             <label for="department_id" class="form-label">Department</label>
             <select class="form-select" id="department_id" name="department_id" required>
-                <option value="">Select Department</option>
-                {% for dept in departments %}
-                    <option value="{{ dept.id }}" {% if dept.hod_id %}selected{% endif %}>
-                        {{ dept.name }} {% if dept.hod %}- Current HOD: {{ dept.hod.full_name }}{% endif %}
-                    </option>
-                {% endfor %}
+              <option value="">Select department</option>
+              {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
             </select>
-        </div>
-
-        <div class="mb-3">
-            <label for="hod_user_id" class="form-label">HOD User</label>
+          </div>
+          <div class="mb-3">
+            <label for="hod_user_id" class="form-label">HOD user</label>
             <select class="form-select" id="hod_user_id" name="hod_user_id" required>
-                <option value="">Select User</option>
-                {% for user in faculty_users %}
-                    <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
-                {% endfor %}
+              <option value="">Select HOD user</option>
+              {% for user in faculty_users %}
+                <option value="{{ user.id }}">{{ user.full_name }} ({{ user.username }})</option>
+              {% endfor %}
             </select>
-        </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Assign HOD</button>
+        </form>
+      </div>
+    </div>
 
-        <button type="submit" class="btn btn-primary">Assign HOD</button>
-    </form>
-
-    <hr>
-
-    <!-- Existing HOD assignments -->
-    <h3 class="mt-4">Current HOD Assignments</h3>
-    {% if departments %}
-        <table class="table table-striped">
-            <thead>
+    <div class="col-lg-7">
+      <div class="section-card">
+        <h3 class="mb-3">Current assignments</h3>
+        {% if departments %}
+          <div class="table-wrap">
+            <table class="table align-middle">
+              <thead>
                 <tr>
-                    <th>Department</th>
-                    <th>HOD</th>
+                  <th>Department</th>
+                  <th>HOD</th>
                 </tr>
-            </thead>
-            <tbody>
+              </thead>
+              <tbody>
                 {% for dept in departments %}
-                    <tr>
-                        <td>{{ dept.name }}</td>
-                        <td>{{ dept.hod.full_name if dept.hod else 'Not assigned' }}</td>
-                    </tr>
+                  <tr>
+                    <td>{{ dept.name }}</td>
+                    <td>{{ dept.hod.full_name if dept.hod else 'Not assigned' }}</td>
+                  </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No departments found.</p>
-    {% endif %}
-</div>
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">No departments available yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}

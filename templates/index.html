@@ -1,145 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Management System</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: url("{{ url_for('static', filename='image.webp') }}") no-repeat center center/cover;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .navbar-custom {
-            background-color: rgba(44,62,80,0.85);
-            backdrop-filter: blur(10px);
-        }
-
-        .navbar-brand img {
-            height: 40px;
-            width: auto;
-            margin-right: 10px;
-        }
-
-        .hero-section {
-            text-align: center;
-            color: white;
-            padding: 6rem 0 4rem 0;
-        }
-
-        .hero-section h1 {
-            font-size: 3rem;
-            font-weight: 700;
-        }
-
-        .hero-section p {
-            font-size: 1.25rem;
-            margin-top: 1rem;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            padding: 2rem;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            margin-top: -2rem;
-            color: white;
-        }
-
-        .form-control {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-        }
-
-        .form-control::placeholder {
-            color: #e0e0e0;
-        }
-
-        .btn-primary {
-            background-color: var(--secondary);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .footer {
-            background-color: rgba(44,62,80,0.9);
-            color: white;
-            padding: 1.5rem 0;
-            text-align: center;
-            margin-top: auto;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Permitrack Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
-                <!-- 🔹 Place logo here -->
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" >
-                EEC Leave/OD portal
-            </a>
+  <div class="app-shell">
+    <div class="login-shell">
+      <section class="login-hero">
+        <span class="eyebrow">Campus Workflow</span>
+        <h1 class="login-title">Manage leave and OD requests without the paper chase.</h1>
+        <p class="login-summary">
+          One portal for students, faculty, HODs, and admins to submit, review, and track every approval stage clearly.
+        </p>
+        <div class="hero-orbit" aria-hidden="true">
+          <div class="orbit-ring orbit-ring-a"></div>
+          <div class="orbit-ring orbit-ring-b"></div>
+          <div class="orbit-node orbit-node-a">Leave</div>
+          <div class="orbit-node orbit-node-b">Review</div>
+          <div class="orbit-node orbit-node-c">OD</div>
+          <div class="orbit-core">
+            <strong>Permitrack</strong>
+          </div>
         </div>
-    </nav>
+      </section>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <img src="{{ url_for('static', filename='title.webp') }}" alt="Logo" class="mb-3" style="height: 100px;">
-            <p>Created By Rajasudhan R</p>
-        </div>
-    </section>
-
-    <!-- Login Section -->
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-5">
-                <div class="login-card">
-                    <h3 class="text-center mb-4">Login</h3>
-                    <form method="POST" action="{{ url_for('login') }}">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Login</button>
-                        </div>
-                    </form>
+      <section class="login-card">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+              {% endfor %}
             </div>
-        </div>
+          {% endif %}
+        {% endwith %}
+
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="College logo" class="login-logo">
+        <h2 class="mb-2">Sign in</h2>
+        <p class="muted-text mb-4">Use your portal credentials to continue.</p>
+
+        <form method="post" action="{{ url_for('auth.login') }}">
+          {{ csrf_input() }}
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+          </div>
+
+          <div class="mb-4">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">Login to Permitrack</button>
+          </div>
+        </form>
+      </section>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p class="mb-0">&copy; 2025 Leave/OD portal. Created by Rajasudhan R</p>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

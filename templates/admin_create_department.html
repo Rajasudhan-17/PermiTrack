@@ -1,40 +1,56 @@
-<!-- templates/admin_create_department.html -->
 {% extends "layout.html" %}
 
-{% block title %}Create Department{% endblock %}
+{% block title %}Departments{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Create Department</h2>
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>Departments</h1>
+      <p class="section-note mb-0">Create departments and check who currently owns final approval.</p>
+    </div>
+  </div>
 
-    <!-- Department creation form -->
-    <form method="POST" action="{{ url_for('create_department') }}">
-        <div class="mb-3">
-            <label for="name" class="form-label">Department Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="Enter department name" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Create Department</button>
-    </form>
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="section-card">
+        <h3 class="mb-3">Create department</h3>
+        <form method="post">
+          {{ csrf_input() }}
+          <label for="name" class="form-label">Department name</label>
+          <input type="text" class="form-control" id="name" name="name" placeholder="Enter department name" required>
+          <button type="submit" class="btn btn-primary mt-3">Create department</button>
+        </form>
+      </div>
+    </div>
 
-    <hr>
-
-    <!-- Existing departments -->
-    <h3 class="mt-4">Existing Departments</h3>
-    {% if departments %}
-        <ul class="list-group">
-            {% for dept in departments %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ dept.name }}
-                    {% if dept.hod %}
-                        <span class="badge bg-success">HOD: {{ dept.hod.full_name }}</span>
-                    {% else %}
-                        <span class="badge bg-secondary">No HOD assigned</span>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No departments found.</p>
-    {% endif %}
-</div>
+    <div class="col-lg-7">
+      <div class="section-card">
+        <h3 class="mb-3">Existing departments</h3>
+        {% if departments %}
+          <div class="table-wrap">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Assigned HOD</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for dept in departments %}
+                  <tr>
+                    <td>{{ dept.name }}</td>
+                    <td>{{ dept.hod.full_name if dept.hod else 'Not assigned' }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">No departments created yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
 {% endblock %}

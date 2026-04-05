@@ -1,106 +1,226 @@
 {% extends "layout.html" %}
 
+{% block title %}Create User{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="content-card p-4">
-            <h3 class="mb-4 text-center">Create User</h3>
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="full_name" class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="full_name" name="full_name" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
-                </div>
-                <div class="mb-3">
-                    <label for="register_number" class="form-label">Register Number</label>
-                    <input type="text" class="form-control" id="register_number" name="register_number" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="role" class="form-label">Role</label>
-                    <select class="form-select" id="role" name="role" required>
-                        <option value="student">Student</option>
-                        <option value="faculty">Faculty</option>
-                        <option value="hod">HOD</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="department_id" class="form-label">Department</label>
-                    <select class="form-select" id="department_id" name="department_id">
-                        <option value="">-- Select Department --</option>
-                        {% for dept in departments %}
-                        <option value="{{ dept.id }}">{{ dept.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="class_group_id" class="form-label">Class</label>
-                    <select class="form-select" id="class_group_id" name="class_group_id">
-                        <option value="">-- Select Class --</option>
-                        {% for cg in classes %}
-                        <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}">
-                            {{ cg.department.name }} - Year {{ cg.year }} {{ cg.section }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="d-grid mt-4">
-                    <button type="submit" class="btn btn-primary">Create User</button>
-                </div>
-            </form>
-        </div>
+<section class="content-card mx-auto" style="max-width: 860px;">
+  <div class="page-heading">
+    <div>
+      <h1>Create User</h1>
+      <p class="section-note mb-0">Create role-specific profiles with the right department and class assignment flow.</p>
     </div>
-</div>
+  </div>
 
+  <form method="post">
+    {{ csrf_input() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="full_name" class="form-label">Full name</label>
+        <input type="text" class="form-control" id="full_name" name="full_name" required>
+      </div>
+      <div class="col-md-6">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <div class="col-md-4">
+        <label for="role" class="form-label">Role</label>
+        <select class="form-select" id="role" name="role" required>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="hod">HOD</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="student-fields" class="role-panel mt-4">
+      <div class="role-panel-title">Student Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="student_department_id" class="form-label">Department</label>
+          <select class="form-select role-department" id="student_department_id" data-target-class="class_group_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="class_group_id" class="form-label">Class</label>
+          <select class="form-select" id="class_group_id">
+            <option value="">Select class</option>
+            {% for cg in classes %}
+              <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}" data-year="{{ cg.year }}" data-section="{{ cg.section }}">
+                {{ cg.department.name }} | Year {{ cg.year }} {{ cg.section }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="student_year" class="form-label">Year</label>
+          <input type="text" class="form-control" id="student_year" placeholder="Auto" readonly>
+        </div>
+        <div class="col-md-2">
+          <label for="student_section" class="form-label">Section</label>
+          <input type="text" class="form-control" id="student_section" placeholder="Auto" readonly>
+        </div>
+      </div>
+    </div>
+
+    <div id="faculty-fields" class="role-panel mt-4">
+      <div class="role-panel-title">Faculty Details</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="department_id" class="form-label">Department</label>
+          <select class="form-select" id="department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="faculty_class_group_id" class="form-label">Assigned Class</label>
+          <select class="form-select role-class" id="faculty_class_group_id" data-source-name="class_group_id">
+            <option value="">Select class</option>
+            {% for cg in classes %}
+              <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}">
+                {{ cg.department.name }} | Year {{ cg.year }} {{ cg.section }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-text text-light-emphasis">Optional primary class during user creation. More classes can be assigned later.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hod-fields" class="role-panel mt-4">
+      <div class="role-panel-title">HOD Details</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="hod_department_id" class="form-label">Department</label>
+          <select class="form-select role-department" id="hod_department_id" data-target-hidden="department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-fields" class="role-panel mt-4">
+      <div class="role-panel-title">Admin Details</div>
+      <p class="section-note mb-0">Admins do not require class or department assignment during creation.</p>
+    </div>
+
+    <input type="hidden" name="department_id" id="shared_department_id">
+    <input type="hidden" name="class_group_id" id="shared_class_group_id">
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Create user</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const deptSelect = document.getElementById('department_id');
-    const classSelect = document.getElementById('class_group_id');
-    const roleSelect = document.getElementById('role');
+  document.addEventListener('DOMContentLoaded', function () {
+    const role = document.getElementById('role');
+    const sharedDepartment = document.getElementById('shared_department_id');
+    const sharedClass = document.getElementById('shared_class_group_id');
+    const studentDepartment = document.getElementById('student_department_id');
+    const studentClass = document.getElementById('class_group_id');
+    const facultyDepartment = document.getElementById('department_id');
+    const facultyClass = document.getElementById('faculty_class_group_id');
+    const hodDepartment = document.getElementById('hod_department_id');
+    const studentYear = document.getElementById('student_year');
+    const studentSection = document.getElementById('student_section');
 
-    function filterClasses() {
-        const selectedDept = deptSelect.value;
-        Array.from(classSelect.options).forEach(opt => {
-            if (!opt.value) return;
-            opt.style.display = opt.dataset.dept === selectedDept || selectedDept === "" ? 'block' : 'none';
-        });
-        if (classSelect.selectedOptions[0] && classSelect.selectedOptions[0].dataset.dept !== selectedDept) {
-            classSelect.value = "";
-        }
+    const panels = {
+      student: document.getElementById('student-fields'),
+      faculty: document.getElementById('faculty-fields'),
+      hod: document.getElementById('hod-fields'),
+      admin: document.getElementById('admin-fields')
+    };
+
+    function togglePanel(activeRole) {
+      Object.entries(panels).forEach(([panelRole, panel]) => {
+        panel.style.display = panelRole === activeRole ? 'block' : 'none';
+      });
     }
 
-    deptSelect.addEventListener('change', filterClasses);
-
-    roleSelect.addEventListener('change', function() {
-        const role = roleSelect.value;
-        if (role === 'student') {
-            classSelect.required = true;
-            deptSelect.required = false;
-        } else {
-            classSelect.required = false;
-            deptSelect.required = false;
+    function filterOptions(selectElement, departmentId) {
+      Array.from(selectElement.options).forEach(option => {
+        if (!option.value) {
+          option.hidden = false;
+          return;
         }
+        option.hidden = departmentId && option.dataset.dept !== departmentId;
+      });
+      if (selectElement.selectedOptions[0] && selectElement.selectedOptions[0].hidden) {
+        selectElement.value = '';
+      }
+    }
+
+    function syncStudentMeta() {
+      const selected = studentClass.selectedOptions[0];
+      studentYear.value = selected && selected.dataset.year ? selected.dataset.year : '';
+      studentSection.value = selected && selected.dataset.section ? selected.dataset.section : '';
+    }
+
+    function syncRoleState() {
+      const selectedRole = role.value;
+      togglePanel(selectedRole);
+
+      sharedDepartment.value = '';
+      sharedClass.value = '';
+
+      studentClass.required = selectedRole === 'student';
+
+      if (selectedRole === 'student') {
+        sharedClass.value = studentClass.value;
+      } else if (selectedRole === 'faculty') {
+        sharedDepartment.value = facultyDepartment.value;
+        sharedClass.value = facultyClass.value;
+      } else if (selectedRole === 'hod') {
+        sharedDepartment.value = hodDepartment.value;
+      }
+    }
+
+    studentDepartment.addEventListener('change', function () {
+      filterOptions(studentClass, studentDepartment.value);
+      syncStudentMeta();
+      syncRoleState();
     });
 
-    roleSelect.dispatchEvent(new Event('change'));
-});
+    facultyDepartment.addEventListener('change', function () {
+      filterOptions(facultyClass, facultyDepartment.value);
+      syncRoleState();
+    });
+
+    studentClass.addEventListener('change', function () {
+      syncStudentMeta();
+      syncRoleState();
+    });
+
+    facultyClass.addEventListener('change', syncRoleState);
+    hodDepartment.addEventListener('change', syncRoleState);
+    role.addEventListener('change', syncRoleState);
+
+    filterOptions(studentClass, studentDepartment.value);
+    filterOptions(facultyClass, facultyDepartment.value);
+    syncStudentMeta();
+    syncRoleState();
+  });
 </script>
 {% endblock %}

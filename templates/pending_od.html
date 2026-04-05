@@ -1,53 +1,55 @@
 {% extends "layout.html" %}
+
+{% block title %}Pending ODs{% endblock %}
+
 {% block content %}
-<div class="content-card">
-  <h2 class="mb-4">Pending On-Duty Requests</h2>
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>Pending OD Reviews</h1>
+      <p class="section-note mb-0">Review the OD requests that currently belong to your queue.</p>
+    </div>
+  </div>
 
-  <table class="table table-bordered table-hover">
-    <thead>
-      <tr>
-        <th>Student</th>
-        <th>Date</th>
-        <th>Reason</th>
-        <th>Proof</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for od in ods %}
-      <tr>
-        <!-- Show student's full name from requester relationship -->
-        <td>
-          {% if od.requester and od.requester.full_name %}
-            {{ od.requester.full_name }}
-          {% else %}
-            User ID: {{ od.requested_by }}
-          {% endif %}
-        </td>
-
-        <td>{{ od.event_date.strftime('%d-%m-%Y') }}</td>
-        <td>{{ od.reason }}</td>
-
-        <td>
-          {% if od.proof_filename %}
-            <a href="{{ url_for('send_od_proof', od_id=od.id) }}" 
-               target="_blank" class="link-primary">View</a>
-          {% else %}
-            N/A
-          {% endif %}
-        </td>
-
-        <td>
-          <a href="{{ url_for('review_od', od_id=od.id) }}" 
-             class="btn btn-sm btn-primary">Review</a>
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td colspan="5" class="text-center">No pending OD requests.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  {% if ods %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Applicant</th>
+            <th>Event Date</th>
+            <th>Reason</th>
+            <th>Proof</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for od in ods %}
+            <tr>
+              <td>{{ od.id }}</td>
+              <td>{{ od.requester.full_name or od.requester.username }}</td>
+              <td>{{ od.event_date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ od.reason }}</td>
+              <td>
+                {% if od.proof_filename %}
+                  <a href="{{ url_for('ods.send_od_proof', od_id=od.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                {% else %}
+                  <span class="muted-text">No proof</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-{{ status_badge(od.status) }}">{{ od.status.replace('_', ' ') }}</span></td>
+              <td class="text-end">
+                <a href="{{ url_for('ods.review_od', od_id=od.id) }}" class="btn btn-sm btn-primary">Review</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No pending OD requests right now.</div>
+  {% endif %}
+</section>
 {% endblock %}

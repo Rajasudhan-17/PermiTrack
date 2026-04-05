@@ -3,34 +3,35 @@
 {% block title %}Apply OD{% endblock %}
 
 {% block content %}
-<div class="content-card">
-  <h2 class="mb-4">Apply for On-Duty (OD)</h2>
+<section class="content-card mx-auto" style="max-width: 760px;">
+  <div class="page-heading">
+    <div>
+      <h1>Apply for On-Duty</h1>
+      <p class="section-note mb-0">Submit your event date, reason, and proof so the request reaches the right reviewer.</p>
+    </div>
+  </div>
 
-  <form method="POST" enctype="multipart/form-data">
-
-    <!-- Event Date -->
-    <div class="mb-3">
-      <label for="event_date" class="form-label">Event Date</label>
-      <input type="date" class="form-control" id="event_date" name="event_date" required>
+  <form method="post" enctype="multipart/form-data">
+    {{ csrf_input() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="event_date" class="form-label">Event date</label>
+        <input type="date" class="form-control" id="event_date" name="event_date" required>
+      </div>
+      <div class="col-12">
+        <label for="reason" class="form-label">Reason</label>
+        <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Describe the OD event and purpose" required></textarea>
+      </div>
+      <div class="col-12">
+        <label for="proof" class="form-label">Proof upload</label>
+        <input type="file" class="form-control" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf">
+      </div>
     </div>
 
-    <!-- Reason -->
-    <div class="mb-3">
-      <label for="reason" class="form-label">Reason</label>
-      <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="Enter reason for OD" required></textarea>
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Submit OD request</button>
+      <a href="{{ url_for('ods.my_ods') }}" class="btn btn-secondary">Back to my ODs</a>
     </div>
-
-    <!-- Proof Upload -->
-    <div class="mb-3">
-      <label for="proof" class="form-label">Upload Proof (Optional)</label>
-      <input type="file" class="form-control" id="proof" name="proof"
-             accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx,.txt">
-    </div>
-
-    <!-- Buttons -->
-    <button type="submit" class="btn btn-primary">Submit Application</button>
-    <a href="{{ url_for('my_ods') }}" class="btn btn-secondary">Cancel</a>
-
   </form>
-</div>
+</section>
 {% endblock %}

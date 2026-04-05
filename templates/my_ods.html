@@ -1,54 +1,54 @@
 {% extends "layout.html" %}
-{% block content %}
-<div class="content-card">
-  <h2 class="mb-4">My On-Duty Applications</h2>
 
-  <!-- List of OD applications -->
-  <h4 class="mt-4 mb-3">My Previous OD Requests</h4>
+{% block title %}My ODs{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>My OD Requests</h1>
+      <p class="section-note mb-0">Track OD approvals, reviewer comments, and proof documents.</p>
+    </div>
+    {% if current_user.role == 'student' %}
+      <a href="{{ url_for('ods.apply_od') }}" class="btn btn-primary">Apply new OD</a>
+    {% endif %}
+  </div>
 
   {% if ods %}
-    <div class="table-responsive">
-      <table class="table table-striped table-bordered align-middle">
+    <div class="table-wrap">
+      <table class="table align-middle">
         <thead>
-          <tr class="text-center">
-            <th>Date</th>
+          <tr>
+            <th>ID</th>
+            <th>Event Date</th>
             <th>Reason</th>
             <th>Status</th>
             <th>Proof</th>
+            <th>Review Comment</th>
           </tr>
         </thead>
         <tbody>
           {% for od in ods %}
-          <tr>
-            <td class="text-center">{{ od.event_date.strftime('%d-%m-%Y') }}</td>
-            <td>{{ od.reason }}</td>
-            <td class="text-center">
-              {% if od.status == 'PENDING' %}
-                <span class="badge bg-warning text-dark">Waiting for Faculty Approval</span>
-              {% elif od.status == 'FACULTY_APPROVED' %}
-                <span class="badge bg-info text-dark">Waiting for HOD Approval</span>
-              {% elif od.status == 'APPROVED' %}
-                <span class="badge bg-success">Approved</span>
-              {% elif od.status == 'REJECTED' %}
-                <span class="badge bg-danger">Rejected</span>
-              {% else %}
-                <span class="badge bg-secondary">{{ od.status }}</span>
-              {% endif %}
-            </td>
-            <td class="text-center">
-              {% if od.proof_filename %}
-                <a href="{{ url_for('send_od_proof', od_id=od.id) }}" target="_blank">View Proof</a>
-              {% else %}
-                N/A
-              {% endif %}
-            </td>
-          </tr>
+            <tr>
+              <td>{{ od.id }}</td>
+              <td>{{ od.event_date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ od.reason }}</td>
+              <td><span class="badge bg-{{ status_badge(od.status) }}">{{ od.status.replace('_', ' ') }}</span></td>
+              <td>
+                {% if od.proof_filename %}
+                  <a href="{{ url_for('ods.send_od_proof', od_id=od.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View Proof</a>
+                {% else %}
+                  <span class="muted-text">No proof</span>
+                {% endif %}
+              </td>
+              <td>{{ od.review_comment or '-' }}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   {% else %}
-    <div class="alert alert-info">No OD requests yet.</div>
+    <div class="empty-state">No OD requests yet.</div>
   {% endif %}
-</div>
+</section>
 {% endblock %}
