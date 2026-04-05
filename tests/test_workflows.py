@@ -15,6 +15,15 @@ from leave_app.models import ClassGroup, Department, EmailQueue, Leave, OD, Requ
 
 class WorkflowTestCase(unittest.TestCase):
     def setUp(self):
+        self.env_patcher = patch.dict(
+            os.environ,
+            {
+                "MAIL_DELIVERY_MODE": "queue",
+                "SENDGRID_API_KEY": "",
+                "SENDGRID_DATA_RESIDENCY": "",
+            },
+        )
+        self.env_patcher.start()
         self.upload_dir = tempfile.mkdtemp(dir=os.getcwd())
         self.app = create_app(
             {
@@ -37,6 +46,7 @@ class WorkflowTestCase(unittest.TestCase):
         with self.app.app_context():
             db.session.remove()
             db.drop_all()
+        self.env_patcher.stop()
         try:
             shutil.rmtree(self.upload_dir, ignore_errors=True)
         except OSError:
@@ -574,6 +584,35 @@ class WorkflowTestCase(unittest.TestCase):
             )
 
             self.assertEqual(production_app.config["MAIL_DELIVERY_MODE"], "sync")
+
+    def test_send_email_uses_default_sender(self):
+        sent_messages = []
+
+        def fake_send(message):
+            sent_messages.append(message)
+
+        with patch.dict(os.environ, {}, clear=True):
+            sender_app = create_app(
+                {
+                    "TESTING": True,
+                    "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                    "RUN_SCHEDULER": False,
+                    "ENABLE_INITDB_ROUTE": False,
+                    "MAIL_USERNAME": "apikey",
+                    "MAIL_DEFAULT_SENDER": "noreply@example.com",
+                    "MAIL_DELIVERY_MODE": "sync",
+                }
+            )
+
+            with sender_app.app_context():
+                db.create_all()
+                with patch("leave_app.services.emailing.mail.send", side_effect=fake_send):
+                    from leave_app.services.emailing import send_email
+
+                    send_email("Approval Test", ["student@example.com"], "Approved")
+
+        self.assertEqual(len(sent_messages), 1)
+        self.assertEqual(sent_messages[0].sender, "noreply@example.com")
 
 
 if __name__ == "__main__":

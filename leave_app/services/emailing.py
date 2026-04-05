@@ -42,11 +42,13 @@ def send_email_now(subject, recipients, body):
         return
 
     username = current_app.config.get("MAIL_USERNAME")
-    if not username:
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER") or username
+
+    if not username or not sender:
         current_app.logger.info("Skipping email '%s' because mail is not configured.", subject)
         return
 
-    msg = Message(subject=subject, sender=username, recipients=recipients, body=body)
+    msg = Message(subject=subject, sender=sender, recipients=recipients, body=body)
     mail.send(msg)
 
 
