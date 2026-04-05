@@ -97,7 +97,7 @@ Queue the daily reminder emails from a scheduler such as cron, EventBridge, or E
 
 ### SMTP Configuration
 
-To enable email sending, configure the following environment variables:
+To enable email sending, create a `.env` file in the project root with the following variables:
 
 - `MAIL_SERVER` (default: smtp.gmail.com)
 - `MAIL_PORT` (default: 587)
@@ -110,12 +110,14 @@ To enable email sending, configure the following environment variables:
 
 For Gmail, use an app password instead of your regular password. Create one at https://myaccount.google.com/apppasswords.
 
-Example .env file:
+Example `.env` file:
 
 ```
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 ```
+
+The app automatically loads environment variables from the `.env` file.
 
 ## Guarded sample data
 
