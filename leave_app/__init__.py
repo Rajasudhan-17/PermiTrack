@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from flask_login import current_user
+from dotenv import load_dotenv
 
 from config import Config, refresh_runtime_config_values
 
@@ -15,6 +16,7 @@ from .services.workflows import pending_counts_for_user, status_badge
 
 
 def create_app(test_config=None):
+    load_dotenv()
     app = Flask(
         __name__,
         instance_relative_config=True,
