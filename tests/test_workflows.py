@@ -217,6 +217,31 @@ class WorkflowTestCase(unittest.TestCase):
             self.assertEqual(od.status, RequestStatus.APPROVED.value)
             self.assertEqual(EmailQueue.query.count(), 2)
 
+    def test_admin_create_user_requires_class_selection_for_faculty(self):
+        self.login("admin")
+
+        with self.app.app_context():
+            department = Department.query.filter_by(name="Computer Science").first()
+
+        response = self.client.post(
+            "/admin/create_user",
+            data={
+                "full_name": "New Faculty",
+                "username": "faculty2",
+                "email": "faculty2@example.com",
+                "password": "pass123",
+                "role": Role.FACULTY.value,
+                "department_id": department.id,
+                "class_group_id": "",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"Faculty users must be assigned to a department, year, and section.", response.data)
+
+        with self.app.app_context():
+            self.assertIsNone(User.query.filter_by(username="faculty2").first())
+
     def test_model_constraints_block_invalid_rows(self):
         with self.app.app_context():
             department = Department.query.filter_by(name="Computer Science").first()

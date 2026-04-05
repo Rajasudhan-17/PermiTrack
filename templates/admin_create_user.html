@@ -46,7 +46,7 @@
       <div class="row g-3">
         <div class="col-md-4">
           <label for="student_department_id" class="form-label">Department</label>
-          <select class="form-select role-department" id="student_department_id" data-target-class="class_group_id">
+          <select class="form-select" id="student_department_id">
             <option value="">Select department</option>
             {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -54,23 +54,16 @@
           </select>
         </div>
         <div class="col-md-4">
-          <label for="class_group_id" class="form-label">Class</label>
-          <select class="form-select" id="class_group_id">
-            <option value="">Select class</option>
-            {% for cg in classes %}
-              <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}" data-year="{{ cg.year }}" data-section="{{ cg.section }}">
-                {{ cg.department.name }} | Year {{ cg.year }} {{ cg.section }}
-              </option>
-            {% endfor %}
+          <label for="student_year" class="form-label">Year</label>
+          <select class="form-select" id="student_year">
+            <option value="">Select year</option>
           </select>
         </div>
-        <div class="col-md-2">
-          <label for="student_year" class="form-label">Year</label>
-          <input type="text" class="form-control" id="student_year" placeholder="Auto" readonly>
-        </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="student_section" class="form-label">Section</label>
-          <input type="text" class="form-control" id="student_section" placeholder="Auto" readonly>
+          <select class="form-select" id="student_section">
+            <option value="">Select section</option>
+          </select>
         </div>
       </div>
     </div>
@@ -78,26 +71,26 @@
     <div id="faculty-fields" class="role-panel mt-4">
       <div class="role-panel-title">Faculty Details</div>
       <div class="row g-3">
-        <div class="col-md-6">
-          <label for="department_id" class="form-label">Department</label>
-          <select class="form-select" id="department_id">
+        <div class="col-md-4">
+          <label for="faculty_department_id" class="form-label">Department</label>
+          <select class="form-select" id="faculty_department_id">
             <option value="">Select department</option>
             {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-6">
-          <label for="faculty_class_group_id" class="form-label">Assigned Class</label>
-          <select class="form-select role-class" id="faculty_class_group_id" data-source-name="class_group_id">
-            <option value="">Select class</option>
-            {% for cg in classes %}
-              <option value="{{ cg.id }}" data-dept="{{ cg.department_id }}">
-                {{ cg.department.name }} | Year {{ cg.year }} {{ cg.section }}
-              </option>
-            {% endfor %}
+        <div class="col-md-4">
+          <label for="faculty_year" class="form-label">Year</label>
+          <select class="form-select" id="faculty_year">
+            <option value="">Select year</option>
           </select>
-          <div class="form-text text-light-emphasis">Optional primary class during user creation. More classes can be assigned later.</div>
+        </div>
+        <div class="col-md-4">
+          <label for="faculty_section" class="form-label">Section</label>
+          <select class="form-select" id="faculty_section">
+            <option value="">Select section</option>
+          </select>
         </div>
       </div>
     </div>
@@ -139,12 +132,22 @@
     const sharedDepartment = document.getElementById('shared_department_id');
     const sharedClass = document.getElementById('shared_class_group_id');
     const studentDepartment = document.getElementById('student_department_id');
-    const studentClass = document.getElementById('class_group_id');
-    const facultyDepartment = document.getElementById('department_id');
-    const facultyClass = document.getElementById('faculty_class_group_id');
-    const hodDepartment = document.getElementById('hod_department_id');
     const studentYear = document.getElementById('student_year');
     const studentSection = document.getElementById('student_section');
+    const facultyDepartment = document.getElementById('faculty_department_id');
+    const facultyYear = document.getElementById('faculty_year');
+    const facultySection = document.getElementById('faculty_section');
+    const hodDepartment = document.getElementById('hod_department_id');
+    const classGroupData = [
+      {% for cg in classes %}
+        {
+          id: "{{ cg.id }}",
+          departmentId: "{{ cg.department_id }}",
+          year: "{{ cg.year }}",
+          section: "{{ cg.section }}"
+        }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
 
     const panels = {
       student: document.getElementById('student-fields'),
@@ -159,23 +162,63 @@
       });
     }
 
-    function filterOptions(selectElement, departmentId) {
-      Array.from(selectElement.options).forEach(option => {
-        if (!option.value) {
-          option.hidden = false;
-          return;
-        }
-        option.hidden = departmentId && option.dataset.dept !== departmentId;
+    function setOptions(selectElement, values, placeholder) {
+      const currentValue = selectElement.value;
+      selectElement.innerHTML = '';
+
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = placeholder;
+      selectElement.appendChild(defaultOption);
+
+      values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        selectElement.appendChild(option);
       });
-      if (selectElement.selectedOptions[0] && selectElement.selectedOptions[0].hidden) {
-        selectElement.value = '';
+
+      if (values.includes(currentValue)) {
+        selectElement.value = currentValue;
       }
     }
 
-    function syncStudentMeta() {
-      const selected = studentClass.selectedOptions[0];
-      studentYear.value = selected && selected.dataset.year ? selected.dataset.year : '';
-      studentSection.value = selected && selected.dataset.section ? selected.dataset.section : '';
+    function getUniqueValues(items, selector) {
+      return [...new Set(items.map(selector))].sort((left, right) => {
+        const leftNumber = Number(left);
+        const rightNumber = Number(right);
+        if (!Number.isNaN(leftNumber) && !Number.isNaN(rightNumber)) {
+          return leftNumber - rightNumber;
+        }
+        return String(left).localeCompare(String(right));
+      });
+    }
+
+    function findClassGroup(departmentId, year, section) {
+      return classGroupData.find(classGroup =>
+        classGroup.departmentId === departmentId &&
+        classGroup.year === year &&
+        classGroup.section === section
+      );
+    }
+
+    function populateYears(departmentSelect, yearSelect) {
+      const departmentId = departmentSelect.value;
+      const matchingClasses = classGroupData.filter(classGroup => classGroup.departmentId === departmentId);
+      const yearOptions = departmentId ? getUniqueValues(matchingClasses, classGroup => classGroup.year) : [];
+      setOptions(yearSelect, yearOptions, 'Select year');
+    }
+
+    function populateSections(departmentSelect, yearSelect, sectionSelect) {
+      const departmentId = departmentSelect.value;
+      const year = yearSelect.value;
+      const matchingClasses = classGroupData.filter(classGroup =>
+        classGroup.departmentId === departmentId && classGroup.year === year
+      );
+      const sectionOptions = departmentId && year
+        ? getUniqueValues(matchingClasses, classGroup => classGroup.section)
+        : [];
+      setOptions(sectionSelect, sectionOptions, 'Select section');
     }
 
     function syncRoleState() {
@@ -185,41 +228,58 @@
       sharedDepartment.value = '';
       sharedClass.value = '';
 
-      studentClass.required = selectedRole === 'student';
+      studentDepartment.required = selectedRole === 'student';
+      studentYear.required = selectedRole === 'student';
+      studentSection.required = selectedRole === 'student';
+      facultyDepartment.required = selectedRole === 'faculty';
+      facultyYear.required = selectedRole === 'faculty';
+      facultySection.required = selectedRole === 'faculty';
+      hodDepartment.required = selectedRole === 'hod';
 
       if (selectedRole === 'student') {
-        sharedClass.value = studentClass.value;
+        sharedDepartment.value = studentDepartment.value;
+        const studentClassGroup = findClassGroup(studentDepartment.value, studentYear.value, studentSection.value);
+        sharedClass.value = studentClassGroup ? studentClassGroup.id : '';
       } else if (selectedRole === 'faculty') {
         sharedDepartment.value = facultyDepartment.value;
-        sharedClass.value = facultyClass.value;
+        const facultyClassGroup = findClassGroup(facultyDepartment.value, facultyYear.value, facultySection.value);
+        sharedClass.value = facultyClassGroup ? facultyClassGroup.id : '';
       } else if (selectedRole === 'hod') {
         sharedDepartment.value = hodDepartment.value;
       }
     }
 
     studentDepartment.addEventListener('change', function () {
-      filterOptions(studentClass, studentDepartment.value);
-      syncStudentMeta();
+      populateYears(studentDepartment, studentYear);
+      setOptions(studentSection, [], 'Select section');
       syncRoleState();
     });
 
     facultyDepartment.addEventListener('change', function () {
-      filterOptions(facultyClass, facultyDepartment.value);
+      populateYears(facultyDepartment, facultyYear);
+      setOptions(facultySection, [], 'Select section');
       syncRoleState();
     });
 
-    studentClass.addEventListener('change', function () {
-      syncStudentMeta();
+    studentYear.addEventListener('change', function () {
+      populateSections(studentDepartment, studentYear, studentSection);
       syncRoleState();
     });
 
-    facultyClass.addEventListener('change', syncRoleState);
+    facultyYear.addEventListener('change', function () {
+      populateSections(facultyDepartment, facultyYear, facultySection);
+      syncRoleState();
+    });
+
+    studentSection.addEventListener('change', syncRoleState);
+    facultySection.addEventListener('change', syncRoleState);
     hodDepartment.addEventListener('change', syncRoleState);
     role.addEventListener('change', syncRoleState);
 
-    filterOptions(studentClass, studentDepartment.value);
-    filterOptions(facultyClass, facultyDepartment.value);
-    syncStudentMeta();
+    populateYears(studentDepartment, studentYear);
+    populateSections(studentDepartment, studentYear, studentSection);
+    populateYears(facultyDepartment, facultyYear);
+    populateSections(facultyDepartment, facultyYear, facultySection);
     syncRoleState();
   });
 </script>

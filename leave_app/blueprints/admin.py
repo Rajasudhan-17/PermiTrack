@@ -113,7 +113,11 @@ def admin_create_user():
             return redirect(url_for("admin.admin_create_user"))
 
         if role == Role.STUDENT.value and not selected_class:
-            flash("Students must be assigned to a class.", "danger")
+            flash("Students must be assigned to a department, year, and section.", "danger")
+            return redirect(url_for("admin.admin_create_user"))
+
+        if role == Role.FACULTY.value and not selected_class:
+            flash("Faculty users must be assigned to a department, year, and section.", "danger")
             return redirect(url_for("admin.admin_create_user"))
 
         if role == Role.HOD.value and not department_id:
