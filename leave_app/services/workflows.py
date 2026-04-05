@@ -292,19 +292,21 @@ def apply_leave_review(leave_id, reviewer_id, action, comment):
             db.session.rollback()
             return False, ("This leave request is no longer available for your review.", "warning")
 
+        email_subject = None
+        email_recipients = []
+        email_body = None
+
         if action == "APPROVE":
             if reviewer.role == Role.FACULTY.value:
                 leave.status = RequestStatus.FACULTY_APPROVED.value
                 leave.approved_by = reviewer.id
-                send_email(
-                    "Leave Forwarded to HOD",
-                    [applicant.email],
-                    (
-                        f"Dear {applicant.full_name or applicant.username},\n\n"
-                        f"Your leave request from {leave.start_date} to {leave.end_date} was approved by faculty "
-                        f"{reviewer.full_name or reviewer.username} and forwarded to the HOD.\n\n"
-                        f"Comment: {comment or 'No comment'}\n"
-                    ),
+                email_subject = "Leave Forwarded to HOD"
+                email_recipients = [applicant.email]
+                email_body = (
+                    f"Dear {applicant.full_name or applicant.username},\n\n"
+                    f"Your leave request from {leave.start_date} to {leave.end_date} was approved by faculty "
+                    f"{reviewer.full_name or reviewer.username} and forwarded to the HOD.\n\n"
+                    f"Comment: {comment or 'No comment'}\n"
                 )
                 flash_message = "Leave approved by faculty and forwarded to the HOD."
                 flash_category = "success"
@@ -320,28 +322,24 @@ def apply_leave_review(leave_id, reviewer_id, action, comment):
                 applicant.leave_balance -= requested_days
                 leave.status = RequestStatus.APPROVED.value
                 leave.approved_by = reviewer.id
-                send_email(
-                    "Leave Approved",
-                    [applicant.email],
-                    (
-                        f"Dear {applicant.full_name or applicant.username},\n\n"
-                        f"Your leave request from {leave.start_date} to {leave.end_date} has been approved by the HOD.\n\n"
-                        f"Comment: {comment or 'No comment'}\n"
-                    ),
+                email_subject = "Leave Approved"
+                email_recipients = [applicant.email]
+                email_body = (
+                    f"Dear {applicant.full_name or applicant.username},\n\n"
+                    f"Your leave request from {leave.start_date} to {leave.end_date} has been approved by the HOD.\n\n"
+                    f"Comment: {comment or 'No comment'}\n"
                 )
                 flash_message = "Leave fully approved and leave balance updated."
                 flash_category = "success"
         else:
             leave.status = RequestStatus.REJECTED.value
             leave.approved_by = reviewer.id
-            send_email(
-                "Leave Rejected",
-                [applicant.email],
-                (
-                    f"Dear {applicant.full_name or applicant.username},\n\n"
-                    f"Your leave request from {leave.start_date} to {leave.end_date} has been rejected.\n\n"
-                    f"Comment: {comment or 'No comment'}\n"
-                ),
+            email_subject = "Leave Rejected"
+            email_recipients = [applicant.email]
+            email_body = (
+                f"Dear {applicant.full_name or applicant.username},\n\n"
+                f"Your leave request from {leave.start_date} to {leave.end_date} has been rejected.\n\n"
+                f"Comment: {comment or 'No comment'}\n"
             )
             flash_message = "Leave request rejected."
             flash_category = "warning"
@@ -349,6 +347,15 @@ def apply_leave_review(leave_id, reviewer_id, action, comment):
         leave.review_comment = comment
         leave.reviewed_on = utcnow()
         db.session.commit()
+
+        if email_subject and email_recipients and email_body is not None:
+            try:
+                send_email(email_subject, email_recipients, email_body)
+            except Exception as exc:
+                current_app.logger.exception(
+                    "Failed to send leave review email for leave %s: %s", leave_id, exc
+                )
+
         return True, (flash_message, flash_category)
     except StaleDataError:
         db.session.rollback()
@@ -377,47 +384,45 @@ def apply_od_review(od_id, reviewer_id, action, comment):
             db.session.rollback()
             return False, ("This OD request is no longer available for your review.", "warning")
 
+        email_subject = None
+        email_recipients = []
+        email_body = None
+
         if action == "APPROVE":
             if reviewer.role == Role.FACULTY.value:
                 od.status = RequestStatus.FACULTY_APPROVED.value
                 od.approved_by = reviewer.id
-                send_email(
-                    "OD Forwarded to HOD",
-                    [applicant.email],
-                    (
-                        f"Dear {applicant.full_name or applicant.username},\n\n"
-                        f"Your OD request for {od.event_date} was approved by faculty "
-                        f"{reviewer.full_name or reviewer.username} and forwarded to the HOD.\n\n"
-                        f"Comment: {comment or 'No comment'}\n"
-                    ),
+                email_subject = "OD Forwarded to HOD"
+                email_recipients = [applicant.email]
+                email_body = (
+                    f"Dear {applicant.full_name or applicant.username},\n\n"
+                    f"Your OD request for {od.event_date} was approved by faculty "
+                    f"{reviewer.full_name or reviewer.username} and forwarded to the HOD.\n\n"
+                    f"Comment: {comment or 'No comment'}\n"
                 )
                 flash_message = "OD approved by faculty and forwarded to the HOD."
                 flash_category = "success"
             else:
                 od.status = RequestStatus.APPROVED.value
                 od.approved_by = reviewer.id
-                send_email(
-                    "OD Approved",
-                    [applicant.email],
-                    (
-                        f"Dear {applicant.full_name or applicant.username},\n\n"
-                        f"Your OD request for {od.event_date} has been approved by the HOD.\n\n"
-                        f"Comment: {comment or 'No comment'}\n"
-                    ),
+                email_subject = "OD Approved"
+                email_recipients = [applicant.email]
+                email_body = (
+                    f"Dear {applicant.full_name or applicant.username},\n\n"
+                    f"Your OD request for {od.event_date} has been approved by the HOD.\n\n"
+                    f"Comment: {comment or 'No comment'}\n"
                 )
                 flash_message = "OD fully approved."
                 flash_category = "success"
         else:
             od.status = RequestStatus.REJECTED.value
             od.approved_by = reviewer.id
-            send_email(
-                "OD Rejected",
-                [applicant.email],
-                (
-                    f"Dear {applicant.full_name or applicant.username},\n\n"
-                    f"Your OD request for {od.event_date} has been rejected.\n\n"
-                    f"Comment: {comment or 'No comment'}\n"
-                ),
+            email_subject = "OD Rejected"
+            email_recipients = [applicant.email]
+            email_body = (
+                f"Dear {applicant.full_name or applicant.username},\n\n"
+                f"Your OD request for {od.event_date} has been rejected.\n\n"
+                f"Comment: {comment or 'No comment'}\n"
             )
             flash_message = "OD request rejected."
             flash_category = "warning"
@@ -425,6 +430,15 @@ def apply_od_review(od_id, reviewer_id, action, comment):
         od.review_comment = comment
         od.reviewed_on = utcnow()
         db.session.commit()
+
+        if email_subject and email_recipients and email_body is not None:
+            try:
+                send_email(email_subject, email_recipients, email_body)
+            except Exception as exc:
+                current_app.logger.exception(
+                    "Failed to send OD review email for OD %s: %s", od_id, exc
+                )
+
         return True, (flash_message, flash_category)
     except StaleDataError:
         db.session.rollback()
