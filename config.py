@@ -88,6 +88,11 @@ def refresh_runtime_config_values(app):
     database_uri = normalize_database_uri(app.config.get("SQLALCHEMY_DATABASE_URI"))
     app.config["SQLALCHEMY_DATABASE_URI"] = database_uri
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = build_engine_options(database_uri, app.config.get("ENV_NAME", "development"))
+    configured_mail_delivery_mode = os.environ.get("MAIL_DELIVERY_MODE")
+    if configured_mail_delivery_mode is not None:
+        app.config["MAIL_DELIVERY_MODE"] = configured_mail_delivery_mode
+    elif app.config.get("ENV_NAME") == "production":
+        app.config["MAIL_DELIVERY_MODE"] = "sync"
     app.config["STORAGE_BACKEND"] = first_non_empty(app.config.get("STORAGE_BACKEND"), default="local")
     app.config["STORAGE_BUCKET"] = first_non_empty(
         app.config.get("STORAGE_BUCKET"),

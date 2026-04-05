@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from ..extensions import db
 from ..models import OD, RequestStatus, Role, User
+from ..services.emailing import send_email
 from ..services.uploads import build_file_response, save_uploaded_file, uploaded_file_exists, validate_uploaded_proof
 from ..services.workflows import apply_od_review, can_review_od, get_assigned_faculty_for_user, is_hod_for_user
 
@@ -64,6 +65,21 @@ def apply_od():
         )
         db.session.add(od)
         db.session.commit()
+
+        assigned_faculty = db.session.get(User, assigned_faculty_id)
+        if assigned_faculty and assigned_faculty.email:
+            try:
+                send_email(
+                    "New OD Request Submitted",
+                    [assigned_faculty.email],
+                    (
+                        f"Hello {assigned_faculty.full_name or assigned_faculty.username},\n\n"
+                        f"{current_user.full_name or current_user.username} submitted an OD request for {event_date}.\n\n"
+                        f"Reason: {reason}\n"
+                    ),
+                )
+            except Exception:
+                current_app.logger.exception("Failed to queue OD submission email for OD %s", od.id)
 
         flash("OD request submitted successfully.", "success")
         return redirect(url_for("ods.my_ods"))

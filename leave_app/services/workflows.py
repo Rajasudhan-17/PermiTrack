@@ -215,6 +215,24 @@ def lock_od(od_id):
     return locked_scalar(select(OD).where(OD.id == od_id))
 
 
+def notify_leave_submission(leave, applicant):
+    reviewer = db.session.get(User, leave.approved_by) if leave.approved_by else None
+    if not reviewer or not reviewer.email:
+        return
+
+    send_email(
+        "New Leave Request Submitted",
+        [reviewer.email],
+        (
+            f"Hello {reviewer.full_name or reviewer.username},\n\n"
+            f"{applicant.full_name or applicant.username} submitted a leave request from "
+            f"{leave.start_date} to {leave.end_date}.\n\n"
+            f"Reason: {leave.reason}\n"
+            f"Emergency: {'Yes' if leave.is_emergency else 'No'}\n"
+        ),
+    )
+
+
 def submit_leave_request(user, start_date, end_date, reason, is_emergency):
     try:
         locked_user = lock_user(user.id)
@@ -264,6 +282,7 @@ def submit_leave_request(user, start_date, end_date, reason, is_emergency):
         )
         db.session.add(leave)
         db.session.commit()
+        notify_leave_submission(leave, locked_user)
         return True, leave, None
     except StaleDataError:
         db.session.rollback()

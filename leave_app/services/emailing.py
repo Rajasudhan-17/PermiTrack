@@ -25,15 +25,16 @@ def queue_email(subject, recipients, body):
         current_app.logger.info("Skipping email '%s' because mail is not configured.", subject)
         return
 
-    db.session.add(
-        EmailQueue(
-            subject=subject,
-            recipients=serialize_recipients(recipients),
-            body=body,
-            status=EmailStatus.QUEUED.value,
-            available_at=utcnow(),
-        )
+    queued_email = EmailQueue(
+        subject=subject,
+        recipients=serialize_recipients(recipients),
+        body=body,
+        status=EmailStatus.QUEUED.value,
+        available_at=utcnow(),
     )
+    db.session.add(queued_email)
+    db.session.commit()
+    return queued_email
 
 
 def send_email_now(subject, recipients, body):

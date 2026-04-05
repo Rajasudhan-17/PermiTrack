@@ -35,7 +35,7 @@ services:
       - key: MAIL_DEFAULT_SENDER
         value: noreply@permitrack.com
       - key: MAIL_DELIVERY_MODE
-        value: queue
+        value: sync
       # Storage Configuration (for file uploads)
       - key: STORAGE_BACKEND
         value: local  # or s3, oci for production

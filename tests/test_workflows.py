@@ -147,6 +147,27 @@ class WorkflowTestCase(unittest.TestCase):
             self.assertEqual(student.leave_balance, 3)
             self.assertEqual(EmailQueue.query.count(), 2)
 
+    def test_leave_application_queues_notification_email(self):
+        self.login("student")
+        response = self.client.post(
+            "/apply",
+            data={
+                "start_date": "2026-04-20",
+                "end_date": "2026-04-21",
+                "reason": "Conference travel",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"Leave request submitted successfully.", response.data)
+
+        with self.app.app_context():
+            queued_email = EmailQueue.query.order_by(EmailQueue.id.desc()).first()
+            self.assertIsNotNone(queued_email)
+            self.assertEqual(queued_email.subject, "New Leave Request Submitted")
+            self.assertEqual(queued_email.status, "QUEUED")
+            self.assertIn("faculty@example.com", queued_email.recipients)
+
     def test_hod_cannot_approve_leave_without_balance(self):
         with self.app.app_context():
             student = User.query.filter_by(username="student").first()
@@ -216,6 +237,26 @@ class WorkflowTestCase(unittest.TestCase):
             od = db.session.get(OD, od_id)
             self.assertEqual(od.status, RequestStatus.APPROVED.value)
             self.assertEqual(EmailQueue.query.count(), 2)
+
+    def test_od_application_queues_notification_email(self):
+        self.login("student")
+        response = self.client.post(
+            "/apply_od",
+            data={
+                "event_date": "2026-04-22",
+                "reason": "Paper presentation",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"OD request submitted successfully.", response.data)
+
+        with self.app.app_context():
+            queued_email = EmailQueue.query.order_by(EmailQueue.id.desc()).first()
+            self.assertIsNotNone(queued_email)
+            self.assertEqual(queued_email.subject, "New OD Request Submitted")
+            self.assertEqual(queued_email.status, "QUEUED")
+            self.assertIn("faculty@example.com", queued_email.recipients)
 
     def test_admin_create_user_requires_class_selection_for_faculty(self):
         self.login("admin")
@@ -514,6 +555,25 @@ class WorkflowTestCase(unittest.TestCase):
         with csrf_app.app_context():
             db.session.remove()
             db.drop_all()
+
+    def test_production_defaults_to_sync_mail_delivery(self):
+        with patch.dict(os.environ, {}, clear=True):
+            production_app = create_app(
+                {
+                    "ENV_NAME": "production",
+                    "TESTING": False,
+                    "MAIL_USERNAME": "apikey",
+                    "MAIL_PASSWORD": "secret",
+                    "MAIL_SERVER": "smtp.sendgrid.net",
+                    "MAIL_DEFAULT_SENDER": "noreply@example.com",
+                    "SECRET_KEY": "secret",
+                    "LEAVE_SECRET": "leave-secret",
+                    "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://user:pass@localhost/db",
+                    "SESSION_COOKIE_SECURE": True,
+                }
+            )
+
+            self.assertEqual(production_app.config["MAIL_DELIVERY_MODE"], "sync")
 
 
 if __name__ == "__main__":
