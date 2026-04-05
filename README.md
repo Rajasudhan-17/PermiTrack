@@ -106,7 +106,7 @@ To enable email sending, create a `.env` file in the project root with the follo
 - `MAIL_USERNAME` (required for sending emails)
 - `MAIL_PASSWORD` (required for sending emails)
 - `MAIL_DEFAULT_SENDER` (optional, defaults to MAIL_USERNAME)
-- `MAIL_DELIVERY_MODE` (default: queue, options: queue/sync)
+- `MAIL_DELIVERY_MODE` (default: sync, options: queue/sync)
 
 For Gmail, use an app password instead of your regular password. Create one at https://myaccount.google.com/apppasswords.
 
@@ -115,6 +115,7 @@ Example `.env` file:
 ```
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
+MAIL_DELIVERY_MODE=sync
 ```
 
 The app automatically loads environment variables from the `.env` file.
