@@ -275,6 +275,73 @@ class WorkflowTestCase(unittest.TestCase):
             self.assertEqual(created_user.class_group.year, 2)
             self.assertEqual(created_user.class_group.section, "A")
 
+    def test_admin_create_faculty_works_with_role_specific_form_fields(self):
+        self.login("admin")
+
+        with self.app.app_context():
+            department = Department.query.filter_by(name="Computer Science").first()
+            extra_class = ClassGroup(year=3, section="B", department=department)
+            db.session.add(extra_class)
+            db.session.commit()
+            department_id = department.id
+
+        response = self.client.post(
+            "/admin/create_user",
+            data={
+                "full_name": "New Faculty",
+                "username": "faculty2",
+                "email": "faculty2@example.com",
+                "password": "pass123",
+                "role": Role.FACULTY.value,
+                "faculty_department_id": department_id,
+                "faculty_year": 3,
+                "faculty_section": "B",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"Faculty user created successfully.", response.data)
+
+        with self.app.app_context():
+            created_user = User.query.filter_by(username="faculty2").first()
+            class_group = ClassGroup.query.filter_by(year=3, section="B", department_id=department_id).first()
+            self.assertIsNotNone(created_user)
+            self.assertEqual(created_user.role, Role.FACULTY.value)
+            self.assertEqual(created_user.department.name, "Computer Science")
+            self.assertEqual(class_group.faculty_id, created_user.id)
+
+    def test_admin_create_hod_works_with_role_specific_form_fields(self):
+        self.login("admin")
+
+        with self.app.app_context():
+            electronics = Department(name="Electronics")
+            db.session.add(electronics)
+            db.session.commit()
+            department_id = electronics.id
+
+        response = self.client.post(
+            "/admin/create_user",
+            data={
+                "full_name": "New HOD",
+                "username": "hod2",
+                "email": "hod2@example.com",
+                "password": "pass123",
+                "role": Role.HOD.value,
+                "hod_department_id": department_id,
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"Hod user created successfully.", response.data)
+
+        with self.app.app_context():
+            created_user = User.query.filter_by(username="hod2").first()
+            electronics = db.session.get(Department, department_id)
+            self.assertIsNotNone(created_user)
+            self.assertEqual(created_user.role, Role.HOD.value)
+            self.assertEqual(created_user.department_id, department_id)
+            self.assertEqual(electronics.hod_id, created_user.id)
+
     def test_model_constraints_block_invalid_rows(self):
         with self.app.app_context():
             department = Department.query.filter_by(name="Computer Science").first()
