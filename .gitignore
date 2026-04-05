@@ -5,3 +5,4 @@ instance/*.db
 instance/*.sqlite
 instance/*.sqlite3
 instance/local_config.py
+.env

@@ -95,6 +95,28 @@ Queue the daily reminder emails from a scheduler such as cron, EventBridge, or E
 .\venv\Scripts\python.exe -m flask --app wsgi queue-daily-summary
 ```
 
+### SMTP Configuration
+
+To enable email sending, configure the following environment variables:
+
+- `MAIL_SERVER` (default: smtp.gmail.com)
+- `MAIL_PORT` (default: 587)
+- `MAIL_USE_TLS` (default: true)
+- `MAIL_USE_SSL` (default: false)
+- `MAIL_USERNAME` (required for sending emails)
+- `MAIL_PASSWORD` (required for sending emails)
+- `MAIL_DEFAULT_SENDER` (optional, defaults to MAIL_USERNAME)
+- `MAIL_DELIVERY_MODE` (default: queue, options: queue/sync)
+
+For Gmail, use an app password instead of your regular password. Create one at https://myaccount.google.com/apppasswords.
+
+Example .env file:
+
+```
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+```
+
 ## Guarded sample data
 
 Prefer the CLI command:
