@@ -120,6 +120,54 @@ MAIL_DELIVERY_MODE=sync
 
 The app automatically loads environment variables from the `.env` file.
 
+## Render Deployment
+
+### Option 1: Using render.yaml (Recommended)
+
+1. **Create `render.yaml`** in your project root (already included)
+2. **Update the configuration** in `render.yaml`:
+   - Replace `DATABASE_URL` with your actual database connection string
+   - Replace `MAIL_USERNAME` and `MAIL_PASSWORD` with your email credentials
+   - Update other settings as needed
+
+3. **Deploy to Render**:
+   - Connect your GitHub repository to Render
+   - Render will automatically detect and use the `render.yaml` configuration
+
+### Option 2: Manual Environment Variable Setup
+
+If you prefer manual setup in Render dashboard:
+
+1. **Go to your Render service dashboard**
+2. **Navigate to Environment**
+3. **Add the following environment variables**:
+
+```
+FLASK_ENV=production
+APP_ENV=production
+SECRET_KEY=your-strong-secret-key
+LEAVE_SECRET=your-leave-secret
+DATABASE_URL=mysql+pymysql://user:password@host:port/database
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DELIVERY_MODE=sync
+STORAGE_BACKEND=local
+INITDB_TOKEN=your-init-token
+```
+
+### Email Configuration for Render
+
+**Important**: For emails to work on Render, you must configure:
+
+- `MAIL_USERNAME`: Your Gmail address
+- `MAIL_PASSWORD`: Your Gmail app password (not regular password)
+- `MAIL_DELIVERY_MODE`: Set to `sync` for immediate sending
+
+**Gmail Setup**:
+1. Enable 2-factor authentication on your Gmail account
+2. Generate an app password: https://myaccount.google.com/apppasswords
+3. Use the app password as `MAIL_PASSWORD`
+
 ## Guarded sample data
 
 Prefer the CLI command:

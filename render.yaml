@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: permitrack
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: LEAVE_SECRET
+        generateValue: true
+      # Database Configuration (Update these with your actual database details)
+      - key: DATABASE_URL
+        value: mysql+pymysql://user:password@host:port/database
+      # Email Configuration (Update these with your actual email credentials)
+      - key: MAIL_USERNAME
+        value: your-email@gmail.com
+      - key: MAIL_PASSWORD
+        value: your-app-password
+      - key: MAIL_DELIVERY_MODE
+        value: sync
+      # Storage Configuration (for file uploads)
+      - key: STORAGE_BACKEND
+        value: local  # or s3, oci for production
+      # Other production settings
+      - key: INITDB_TOKEN
+        generateValue: true
