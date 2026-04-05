@@ -52,8 +52,17 @@ def send_email_now(subject, recipients, body):
 def send_email(subject, recipients, body):
     mode = current_app.config.get("MAIL_DELIVERY_MODE", "queue")
     if mode == "sync":
-        send_email_now(subject, recipients, body)
-        return
+        try:
+            send_email_now(subject, recipients, body)
+            return
+        except Exception as exc:
+            current_app.logger.warning(
+                "Synchronous email send failed for '%s', falling back to queue: %s",
+                subject,
+                exc,
+            )
+            queue_email(subject, recipients, body)
+            return
 
     queue_email(subject, recipients, body)
 
