@@ -46,7 +46,7 @@
       <div class="row g-3">
         <div class="col-md-4">
           <label for="student_department_id" class="form-label">Department</label>
-          <select class="form-select" id="student_department_id">
+          <select class="form-select" id="student_department_id" name="student_department_id">
             <option value="">Select department</option>
             {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -55,13 +55,13 @@
         </div>
         <div class="col-md-4">
           <label for="student_year" class="form-label">Year</label>
-          <select class="form-select" id="student_year">
+          <select class="form-select" id="student_year" name="student_year">
             <option value="">Select year</option>
           </select>
         </div>
         <div class="col-md-4">
           <label for="student_section" class="form-label">Section</label>
-          <select class="form-select" id="student_section">
+          <select class="form-select" id="student_section" name="student_section">
             <option value="">Select section</option>
           </select>
         </div>
@@ -73,7 +73,7 @@
       <div class="row g-3">
         <div class="col-md-4">
           <label for="faculty_department_id" class="form-label">Department</label>
-          <select class="form-select" id="faculty_department_id">
+          <select class="form-select" id="faculty_department_id" name="faculty_department_id">
             <option value="">Select department</option>
             {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -82,13 +82,13 @@
         </div>
         <div class="col-md-4">
           <label for="faculty_year" class="form-label">Year</label>
-          <select class="form-select" id="faculty_year">
+          <select class="form-select" id="faculty_year" name="faculty_year">
             <option value="">Select year</option>
           </select>
         </div>
         <div class="col-md-4">
           <label for="faculty_section" class="form-label">Section</label>
-          <select class="form-select" id="faculty_section">
+          <select class="form-select" id="faculty_section" name="faculty_section">
             <option value="">Select section</option>
           </select>
         </div>
@@ -100,7 +100,7 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label for="hod_department_id" class="form-label">Department</label>
-          <select class="form-select role-department" id="hod_department_id" data-target-hidden="department_id">
+          <select class="form-select role-department" id="hod_department_id" name="hod_department_id" data-target-hidden="department_id">
             <option value="">Select department</option>
             {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>

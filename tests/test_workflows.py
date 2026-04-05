@@ -242,6 +242,39 @@ class WorkflowTestCase(unittest.TestCase):
         with self.app.app_context():
             self.assertIsNone(User.query.filter_by(username="faculty2").first())
 
+    def test_admin_create_student_works_with_role_specific_form_fields(self):
+        self.login("admin")
+
+        with self.app.app_context():
+            department = Department.query.filter_by(name="Computer Science").first()
+
+        response = self.client.post(
+            "/admin/create_user",
+            data={
+                "full_name": "New Student",
+                "username": "student2",
+                "email": "student2@example.com",
+                "password": "pass123",
+                "role": Role.STUDENT.value,
+                "student_department_id": department.id,
+                "student_year": 2,
+                "student_section": "A",
+                "department_id": "",
+                "class_group_id": "",
+            },
+            follow_redirects=True,
+        )
+
+        self.assertIn(b"Student user created successfully.", response.data)
+
+        with self.app.app_context():
+            created_user = User.query.filter_by(username="student2").first()
+            self.assertIsNotNone(created_user)
+            self.assertEqual(created_user.role, Role.STUDENT.value)
+            self.assertEqual(created_user.department.name, "Computer Science")
+            self.assertEqual(created_user.class_group.year, 2)
+            self.assertEqual(created_user.class_group.section, "A")
+
     def test_model_constraints_block_invalid_rows(self):
         with self.app.app_context():
             department = Department.query.filter_by(name="Computer Science").first()

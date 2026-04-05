@@ -12,6 +12,38 @@ from ..services.workflows import get_form_value
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
+def _resolve_user_assignment_values(form, role):
+    department_id = get_form_value(form, "department_id", int)
+    class_group_id = get_form_value(form, "class_group_id", int)
+
+    if role == Role.STUDENT.value:
+        department_id = department_id or get_form_value(form, "student_department_id", int)
+        student_year = get_form_value(form, "student_year", int)
+        student_section = get_form_value(form, "student_section", str)
+        if class_group_id is None and department_id and student_year and student_section:
+            class_group = ClassGroup.query.filter_by(
+                department_id=department_id,
+                year=student_year,
+                section=student_section.strip().upper(),
+            ).first()
+            class_group_id = class_group.id if class_group else None
+    elif role == Role.FACULTY.value:
+        department_id = department_id or get_form_value(form, "faculty_department_id", int)
+        faculty_year = get_form_value(form, "faculty_year", int)
+        faculty_section = get_form_value(form, "faculty_section", str)
+        if class_group_id is None and department_id and faculty_year and faculty_section:
+            class_group = ClassGroup.query.filter_by(
+                department_id=department_id,
+                year=faculty_year,
+                section=faculty_section.strip().upper(),
+            ).first()
+            class_group_id = class_group.id if class_group else None
+    elif role == Role.HOD.value:
+        department_id = department_id or get_form_value(form, "hod_department_id", int)
+
+    return department_id, class_group_id
+
+
 @bp.route("/create_department", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -78,8 +110,6 @@ def admin_create_user():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         role = request.form.get("role", Role.STUDENT.value)
-        department_id = get_form_value(request.form, "department_id", int)
-        class_group_id = get_form_value(request.form, "class_group_id", int)
         valid_roles = {role_item.value for role_item in Role}
 
         if not full_name or not username or not email or not password:
@@ -89,6 +119,8 @@ def admin_create_user():
         if role not in valid_roles:
             flash("Please choose a valid role.", "danger")
             return redirect(url_for("admin.admin_create_user"))
+
+        department_id, class_group_id = _resolve_user_assignment_values(request.form, role)
 
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("A user with that username or email already exists.", "warning")
