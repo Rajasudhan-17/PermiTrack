@@ -213,8 +213,8 @@ class BaseConfig:
                 errors.append("Production must use MySQL, not SQLite.")
             if not app.config["SESSION_COOKIE_SECURE"]:
                 errors.append("SESSION_COOKIE_SECURE must be enabled in production.")
-            if app.config["STORAGE_BACKEND"] not in {"s3", "oci"}:
-                errors.append("Production must use STORAGE_BACKEND=s3 or STORAGE_BACKEND=oci for shared file storage.")
+            if app.config["STORAGE_BACKEND"] not in {"s3", "oci", "local"}:
+                errors.append("Production must use STORAGE_BACKEND=s3, oci, or local for file storage.")
             if app.config["STORAGE_BACKEND"] in {"s3", "oci"} and not app.config.get("STORAGE_BUCKET"):
                 errors.append("Set STORAGE_BUCKET or the cloud-specific bucket variable for object storage.")
             if app.config["STORAGE_BACKEND"] == "oci":
@@ -253,7 +253,7 @@ class ProductionConfig(BaseConfig):
     ENV_NAME = "production"
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
-    STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "s3")
+    STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
 
 
 CONFIG_BY_ENV = {
