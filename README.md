@@ -106,7 +106,9 @@ To enable email sending, create a `.env` file in the project root with the follo
 - `MAIL_USERNAME` (required for sending emails)
 - `MAIL_PASSWORD` (required for sending emails)
 - `MAIL_DEFAULT_SENDER` (optional, defaults to MAIL_USERNAME)
-- `MAIL_DELIVERY_MODE` (default: sync, options: queue/sync)
+- `MAIL_DELIVERY_MODE` (default: queue, options: queue/sync)
+
+#### Using Gmail
 
 For Gmail, use an app password instead of your regular password. Create one at https://myaccount.google.com/apppasswords.
 
@@ -115,8 +117,37 @@ Example `.env` file:
 ```
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
-MAIL_DELIVERY_MODE=sync
+MAIL_DELIVERY_MODE=queue
 ```
+
+#### Using SendGrid (Recommended for Production & Render)
+
+SendGrid is more reliable and works better on Render than direct SMTP.
+
+**Setup**:
+1. Create free account at [sendgrid.com](https://sendgrid.com)
+2. Go to **Settings → API Keys** and create an API key
+3. Add to `.env`:
+
+```
+MAIL_SERVER=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USE_SSL=false
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=SG.your-api-key-here
+MAIL_DEFAULT_SENDER=noreply@yourdomain.com
+MAIL_DELIVERY_MODE=queue
+```
+
+**On Render Dashboard**:
+- Add these same environment variables
+- The `apikey` username is literal (not your actual API key)
+- `MAIL_PASSWORD` is your SendGrid API key (starts with `SG.`)
+
+**Email Delivery**:
+- `MAIL_DELIVERY_MODE=queue` is recommended for production (emails sent async)
+- `MAIL_DELIVERY_MODE=sync` sends immediately but fails if SMTP is unavailable (now has fallback to queue)
 
 The app automatically loads environment variables from the `.env` file.
 
