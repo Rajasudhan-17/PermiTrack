@@ -16,7 +16,7 @@ services:
       - key: DATABASE_URL
         value: mysql+pymysql://user:password@host:port/database
       - key: MAIL_SERVER
-        value: smtp.gmail.com
+        value: smtp-relay.brevo.com
       - key: MAIL_PORT
         value: "587"
       - key: MAIL_USE_TLS
@@ -24,11 +24,11 @@ services:
       - key: MAIL_USE_SSL
         value: "false"
       - key: MAIL_USERNAME
-        value: your-email@gmail.com
+        value: your-brevo-login@smtp-brevo.com
       - key: MAIL_PASSWORD
-        value: your-app-password
+        sync: false
       - key: MAIL_DEFAULT_SENDER
-        value: your-email@gmail.com
+        value: your-verified-sender@example.com
       - key: MAIL_DELIVERY_MODE
         value: sync
       - key: STORAGE_BACKEND
