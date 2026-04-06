@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from urllib.parse import urlparse
 from urllib.parse import quote_plus
 
 
@@ -39,6 +40,18 @@ def normalize_database_uri(uri):
         return uri.replace("mysql://", "mysql+pymysql://", 1)
 
     return uri
+
+
+def default_mail_backend():
+    configured_backend = os.environ.get("MAIL_BACKEND")
+    if configured_backend:
+        return configured_backend.strip().lower()
+
+    brevo_api_key = os.environ.get("BREVO_API_KEY")
+    if brevo_api_key:
+        return "brevo_api"
+
+    return "smtp"
 
 
 def build_mysql_uri_from_env():
@@ -168,12 +181,16 @@ class BaseConfig:
     MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
     MAIL_USE_TLS = env_flag("MAIL_USE_TLS", True)
     MAIL_USE_SSL = env_flag("MAIL_USE_SSL", False)
+    MAIL_BACKEND = default_mail_backend()
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
     MAIL_DELIVERY_MODE = os.environ.get("MAIL_DELIVERY_MODE", "queue")
     EMAIL_BATCH_SIZE = env_int("EMAIL_BATCH_SIZE", 50)
     EMAIL_MAX_RETRIES = env_int("EMAIL_MAX_RETRIES", 5)
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
+    BREVO_API_URL = os.environ.get("BREVO_API_URL", "https://api.brevo.com/v3/smtp/email")
+    BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME")
 
     STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
     LOCAL_UPLOAD_ROOT = os.path.join(BASE_DIR, "uploads")
@@ -229,6 +246,21 @@ class BaseConfig:
                     errors.append("Set OCI_S3_ACCESS_KEY and OCI_S3_SECRET_KEY for OCI object storage access.")
             if app.config["MAIL_DELIVERY_MODE"] not in {"queue", "sync"}:
                 errors.append("MAIL_DELIVERY_MODE must be either 'queue' or 'sync'.")
+            if app.config["MAIL_BACKEND"] not in {"smtp", "brevo_api"}:
+                errors.append("MAIL_BACKEND must be either 'smtp' or 'brevo_api'.")
+            if app.config["MAIL_BACKEND"] == "smtp":
+                if not app.config.get("MAIL_USERNAME") or not app.config.get("MAIL_PASSWORD"):
+                    errors.append("Set MAIL_USERNAME and MAIL_PASSWORD when using SMTP mail delivery.")
+            if app.config["MAIL_BACKEND"] == "brevo_api":
+                if not app.config.get("BREVO_API_KEY"):
+                    errors.append("Set BREVO_API_KEY when using the Brevo API mail backend.")
+                sender = app.config.get("MAIL_DEFAULT_SENDER")
+                if not sender or "@" not in sender:
+                    errors.append("Set MAIL_DEFAULT_SENDER to a verified sender email when using the Brevo API.")
+                api_url = app.config.get("BREVO_API_URL")
+                parsed_url = urlparse(api_url) if api_url else None
+                if not parsed_url or parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+                    errors.append("BREVO_API_URL must be a valid HTTP(S) URL.")
 
         if errors:
             raise RuntimeError("Production configuration error(s): " + " ".join(errors))

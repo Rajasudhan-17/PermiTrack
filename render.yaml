@@ -23,12 +23,20 @@ services:
         value: "true"
       - key: MAIL_USE_SSL
         value: "false"
+      - key: MAIL_BACKEND
+        value: brevo_api
       - key: MAIL_USERNAME
         value: your-brevo-login@smtp-brevo.com
       - key: MAIL_PASSWORD
         sync: false
       - key: MAIL_DEFAULT_SENDER
         value: your-verified-sender@example.com
+      - key: BREVO_SENDER_NAME
+        value: PermiTrack
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_API_URL
+        value: https://api.brevo.com/v3/smtp/email
       - key: MAIL_DELIVERY_MODE
         value: sync
       - key: STORAGE_BACKEND

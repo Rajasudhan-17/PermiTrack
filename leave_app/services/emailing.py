@@ -1,5 +1,7 @@
 import json
 from datetime import timedelta
+from urllib import error as urllib_error
+from urllib import request as urllib_request
 
 from flask import current_app
 from flask_mail import Message
@@ -16,12 +18,21 @@ def deserialize_recipients(raw_value):
     return json.loads(raw_value)
 
 
+def mail_is_configured():
+    backend = current_app.config.get("MAIL_BACKEND", "smtp")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER")
+
+    if backend == "brevo_api":
+        return bool(current_app.config.get("BREVO_API_KEY") and sender)
+
+    return bool(current_app.config.get("MAIL_USERNAME") and sender)
+
+
 def queue_email(subject, recipients, body):
     if not recipients:
         return
 
-    username = current_app.config.get("MAIL_USERNAME")
-    if not username:
+    if not mail_is_configured():
         current_app.logger.info("Skipping email '%s' because mail is not configured.", subject)
         return
 
@@ -41,15 +52,52 @@ def send_email_now(subject, recipients, body):
     if not recipients:
         return
 
-    username = current_app.config.get("MAIL_USERNAME")
-    sender = current_app.config.get("MAIL_DEFAULT_SENDER") or username
-
-    if not username or not sender:
+    if not mail_is_configured():
         current_app.logger.info("Skipping email '%s' because mail is not configured.", subject)
         return
 
+    if current_app.config.get("MAIL_BACKEND", "smtp") == "brevo_api":
+        send_email_via_brevo_api(subject, recipients, body)
+        return
+
+    username = current_app.config.get("MAIL_USERNAME")
+    sender = current_app.config.get("MAIL_DEFAULT_SENDER") or username
+
     msg = Message(subject=subject, sender=sender, recipients=recipients, body=body)
     mail.send(msg)
+
+
+def send_email_via_brevo_api(subject, recipients, body):
+    sender_email = current_app.config["MAIL_DEFAULT_SENDER"]
+    sender_name = current_app.config.get("BREVO_SENDER_NAME") or sender_email
+    payload = {
+        "sender": {"email": sender_email, "name": sender_name},
+        "to": [{"email": recipient} for recipient in recipients],
+        "subject": subject,
+        "textContent": body,
+    }
+    request_body = json.dumps(payload).encode("utf-8")
+    request = urllib_request.Request(
+        current_app.config["BREVO_API_URL"],
+        data=request_body,
+        headers={
+            "accept": "application/json",
+            "api-key": current_app.config["BREVO_API_KEY"],
+            "content-type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib_request.urlopen(request, timeout=15) as response:
+            status_code = getattr(response, "status", response.getcode())
+            if status_code >= 400:
+                raise RuntimeError(f"Brevo API returned HTTP {status_code}.")
+    except urllib_error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Brevo API returned HTTP {exc.code}: {error_body}") from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"Brevo API request failed: {exc.reason}") from exc
 
 
 def send_email(subject, recipients, body):
