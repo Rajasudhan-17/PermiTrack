@@ -1,11 +1,12 @@
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 
 from ..auth import admin_required
 from ..extensions import db
 from ..models import ClassGroup, Department, Leave, OD, RequestStatus, Role, User
 from ..services.reports import csv_response_content, pdf_response_content, report_context
 from ..services.seed import ensure_seed_data
+from ..services.uploads import delete_uploaded_file
 from ..services.workflows import get_form_value
 
 
@@ -42,6 +43,62 @@ def _resolve_user_assignment(form, role):
         return get_form_value(form, "hod_department_id", int), None
 
     return None, None
+
+
+def _remove_proof_file(prefix, filename):
+    if not filename:
+        return
+
+    try:
+        delete_uploaded_file(prefix, filename)
+    except Exception:
+        current_app.logger.exception("Failed to delete uploaded proof '%s' for prefix '%s'.", filename, prefix)
+
+
+def _delete_leave_records(leaves, restore_balance=False):
+    deleted_count = 0
+
+    for leave in leaves:
+        if restore_balance and leave.status == RequestStatus.APPROVED.value and leave.requester:
+            requested_days = (leave.end_date - leave.start_date).days + 1
+            leave.requester.leave_balance += requested_days
+
+        _remove_proof_file(current_app.config["LEAVE_UPLOAD_PREFIX"], leave.proof_filename)
+        db.session.delete(leave)
+        deleted_count += 1
+
+    return deleted_count
+
+
+def _delete_od_records(ods):
+    deleted_count = 0
+
+    for od in ods:
+        _remove_proof_file(current_app.config["OD_UPLOAD_PREFIX"], od.proof_filename)
+        db.session.delete(od)
+        deleted_count += 1
+
+    return deleted_count
+
+
+def _delete_user_related_records(user):
+    leave_rows = (
+        Leave.query.filter((Leave.requested_by == user.id) | (Leave.approved_by == user.id))
+        .order_by(Leave.id.asc())
+        .all()
+    )
+    unique_leaves = list({leave.id: leave for leave in leave_rows}.values())
+
+    od_rows = (
+        OD.query.filter((OD.requested_by == user.id) | (OD.approved_by == user.id) | (OD.faculty_id == user.id))
+        .order_by(OD.id.asc())
+        .all()
+    )
+    unique_ods = list({od.id: od for od in od_rows}.values())
+
+    leave_count = _delete_leave_records(unique_leaves, restore_balance=True)
+    od_count = _delete_od_records(unique_ods)
+    return leave_count, od_count
 
 
 @bp.route("/create_department", methods=["GET", "POST"])
@@ -194,7 +251,42 @@ def admin_create_user():
 
     departments = Department.query.order_by(Department.name.asc()).all()
     classes = ClassGroup.query.order_by(ClassGroup.department_id, ClassGroup.year, ClassGroup.section).all()
-    return render_template("admin_create_user.html", departments=departments, classes=classes)
+    users = User.query.order_by(User.role.asc(), User.full_name.asc(), User.username.asc()).all()
+    return render_template("admin_create_user.html", departments=departments, classes=classes, users=users)
+
+
+@bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def delete_user(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("User not found.", "warning")
+        return redirect(url_for("admin.admin_create_user"))
+
+    if user.id == current_user.id:
+        flash("You cannot delete the admin account you are currently logged in with.", "danger")
+        return redirect(url_for("admin.admin_create_user"))
+
+    if user.role == Role.ADMIN.value:
+        remaining_admins = User.query.filter_by(role=Role.ADMIN.value).count()
+        if remaining_admins <= 1:
+            flash("At least one admin account must remain in the system.", "danger")
+            return redirect(url_for("admin.admin_create_user"))
+
+    leave_count, od_count = _delete_user_related_records(user)
+
+    Department.query.filter_by(hod_id=user.id).update({"hod_id": None}, synchronize_session=False)
+    ClassGroup.query.filter_by(faculty_id=user.id).update({"faculty_id": None}, synchronize_session=False)
+    User.query.filter_by(faculty_id=user.id).update({"faculty_id": None}, synchronize_session=False)
+
+    db.session.delete(user)
+    db.session.commit()
+    flash(
+        f"Deleted user '{user.full_name or user.username}' and removed {leave_count} leave record(s) and {od_count} OD record(s).",
+        "success",
+    )
+    return redirect(url_for("admin.admin_create_user"))
 
 
 @bp.route("/assign_hod", methods=["GET", "POST"])
@@ -271,12 +363,37 @@ def admin_all_leaves():
     return render_template("admin_all_leaves.html", leaves=leaves)
 
 
+@bp.route("/all_leaves/clear", methods=["POST"])
+@login_required
+@admin_required
+def clear_all_leaves():
+    leaves = Leave.query.order_by(Leave.id.asc()).all()
+    deleted_count = _delete_leave_records(leaves, restore_balance=True)
+    db.session.commit()
+    flash(
+        f"Cleared {deleted_count} leave record(s) and restored balances for approved leave entries.",
+        "success",
+    )
+    return redirect(url_for("admin.admin_all_leaves"))
+
+
 @bp.route("/all_ods")
 @login_required
 @admin_required
 def admin_all_ods():
     ods = OD.query.order_by(OD.applied_on.desc()).all()
     return render_template("admin_all_ods.html", ods=ods)
+
+
+@bp.route("/all_ods/clear", methods=["POST"])
+@login_required
+@admin_required
+def clear_all_ods():
+    ods = OD.query.order_by(OD.id.asc()).all()
+    deleted_count = _delete_od_records(ods)
+    db.session.commit()
+    flash(f"Cleared {deleted_count} OD record(s).", "success")
+    return redirect(url_for("admin.admin_all_ods"))
 
 
 @bp.route("/reports")

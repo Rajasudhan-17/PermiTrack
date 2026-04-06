@@ -9,6 +9,16 @@
       <h1>All Leave Requests</h1>
       <p class="section-note mb-0">Full administrative view of every leave request in the system.</p>
     </div>
+    <form method="post" action="{{ url_for('admin.clear_all_leaves') }}" class="d-flex">
+      {{ csrf_input() }}
+      <button
+        type="submit"
+        class="btn btn-outline-danger"
+        onclick="return confirm('Clear all leave records and restore deducted leave balances? This cannot be undone.');"
+      >
+        Clear Leave Data
+      </button>
+    </form>
   </div>
 
   {% if leaves %}

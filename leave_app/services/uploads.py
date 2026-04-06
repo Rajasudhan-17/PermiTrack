@@ -170,3 +170,18 @@ def build_file_response(prefix, filename, mimetype):
         as_attachment=False,
         mimetype=mimetype,
     )
+
+
+def delete_uploaded_file(prefix, filename):
+    if not filename:
+        return
+
+    if object_storage_enabled():
+        client = object_storage_client()
+        client.delete_object(Bucket=current_app.config["STORAGE_BUCKET"], Key=storage_key(prefix, filename))
+        return
+
+    folder_config_key = "OD_UPLOAD_FOLDER" if prefix == current_app.config["OD_UPLOAD_PREFIX"] else "LEAVE_UPLOAD_FOLDER"
+    file_path = os.path.join(current_app.config[folder_config_key], filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
