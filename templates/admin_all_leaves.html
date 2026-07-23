@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}All Leaves{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>All Leave Requests</h1>
+      <p class="section-note mb-0">Full administrative view of every leave request in the system.</p>
+    </div>
+    <form method="post" action="{{ url_for('admin.clear_all_leaves') }}" class="d-flex">
+      {{ csrf_input() }}
+      <button
+        type="submit"
+        class="btn btn-outline-danger"
+        onclick="return confirm('Clear all leave records and restore deducted leave balances? This cannot be undone.');"
+      >
+        Clear Leave Data
+      </button>
+    </form>
+  </div>
+
+  {% if leaves %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Applicant</th>
+            <th>Role</th>
+            <th>Dates</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Applied On</th>
+            <th>Reviewed By</th>
+            <th>Proof</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leave in leaves %}
+            <tr>
+              <td>{{ leave.id }}</td>
+              <td><a href="{{ url_for('leaves.student_history', user_id=leave.requester.id) }}" class="text-info fw-semibold text-decoration-none">{{ leave.requester.full_name or leave.requester.username }}</a></td>
+              <td>{{ leave.requester.role|capitalize }}</td>
+              <td>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+              <td>
+                {% if leave.is_emergency %}
+                  <span class="badge bg-danger">Emergency</span>
+                {% else %}
+                  <span class="badge bg-secondary">Standard</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
+              <td>{{ leave.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ leave.approver.full_name if leave.approver else '-' }}</td>
+              <td>
+                {% if leave.proof_filename %}
+                  <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                {% elif leave.is_emergency %}
+                  <span class="text-warning fw-semibold">Pending</span>
+                {% else %}
+                  <span class="muted-text">Not required</span>
+                {% endif %}
+              </td>
+              <td>{{ leave.review_comment or '-' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No leave requests found.</div>
+  {% endif %}
+</section>
+{% endblock %}

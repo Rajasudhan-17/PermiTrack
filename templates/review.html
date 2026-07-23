@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}Review Leave{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 860px;">
+  <div class="page-heading">
+    <div>
+      <h1>Review Leave #{{ leave.id }}</h1>
+      <p class="section-note mb-0">Check the request details and record a decision with an optional comment.</p>
+    </div>
+    <span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span>
+  </div>
+
+  <div class="info-list mb-4">
+    <div class="info-row">
+      <div class="info-label">Applicant</div>
+      <div><a href="{{ url_for('leaves.student_history', user_id=leave.requester.id) }}" class="text-info fw-semibold text-decoration-none">{{ leave.requester.full_name or leave.requester.username }}</a></div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Department</div>
+      <div>{{ leave.requester.department.name if leave.requester.department else 'N/A' }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Leave Dates</div>
+      <div>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Priority</div>
+      <div>
+        {% if leave.is_emergency %}
+          Emergency leave
+        {% else %}
+          Standard leave
+        {% endif %}
+      </div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Reason</div>
+      <div>{{ leave.reason }}</div>
+    </div>
+    {% if leave.is_emergency %}
+      <div class="info-row">
+        <div class="info-label">Supporting Proof</div>
+        <div>
+          {% if leave.proof_filename %}
+            <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Open proof</a>
+          {% else %}
+            <span class="text-warning fw-semibold">Pending upload from applicant</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if leave.status == 'FACULTY_APPROVED' and current_user.role == 'hod' %}
+    <div class="alert alert-info mb-4">Faculty comment: {{ leave.review_comment or 'No comment provided.' }}</div>
+  {% endif %}
+
+  <form method="post">
+    {{ csrf_input() }}
+    <label for="comment" class="form-label">Comment</label>
+    <textarea name="comment" id="comment" rows="4" class="form-control" placeholder="Add context for the applicant">{{ leave.review_comment or '' }}</textarea>
+
+    <div class="d-flex gap-2 mt-4">
+      <button name="action" value="APPROVE" type="submit" class="btn btn-success">Approve</button>
+      <button name="action" value="REJECT" type="submit" class="btn btn-danger">Reject</button>
+      <a href="{{ url_for('leaves.pending') }}" class="btn btn-secondary">Back</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

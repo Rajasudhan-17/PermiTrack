@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block title %}Pending Leaves{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>Pending Leave Reviews</h1>
+      <p class="section-note mb-0">Open only the leave requests currently waiting for your approval.</p>
+    </div>
+  </div>
+
+  {% if leaves %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Applicant</th>
+            <th>Dates</th>
+            <th>Reason</th>
+            <th>Priority</th>
+            {% if current_user.role == 'faculty' %}
+              <th>Conflict Check</th>
+            {% endif %}
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leave in leaves %}
+            <tr>
+              <td>{{ leave.id }}</td>
+              <td><a href="{{ url_for('leaves.student_history', user_id=leave.applicant.id) }}" class="text-info fw-semibold text-decoration-none">{{ leave.applicant.full_name or leave.applicant.username }}</a></td>
+              <td>{{ leave.start_date.strftime('%Y-%m-%d') }} to {{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ leave.reason }}</td>
+              <td>
+                {% if leave.is_emergency %}
+                  <span class="badge bg-danger">Emergency</span>
+                {% else %}
+                  <span class="badge bg-secondary">Normal</span>
+                {% endif %}
+              </td>
+              {% if current_user.role == 'faculty' %}
+                {% set conflict = leave_conflicts.get(leave.id) %}
+                <td>
+                  {% if conflict.level == 'high' %}
+                    <div class="text-danger fw-semibold">{{ conflict.message }}</div>
+                  {% elif conflict.level == 'medium' %}
+                    <div class="text-warning fw-semibold">{{ conflict.message }}</div>
+                  {% else %}
+                    <span class="muted-text">{{ conflict.message }}</span>
+                  {% endif %}
+                </td>
+              {% endif %}
+              <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
+              <td class="text-end">
+                <a href="{{ url_for('leaves.review', leave_id=leave.id) }}" class="btn btn-sm btn-primary">Review</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No pending leave requests right now.</div>
+  {% endif %}
+</section>
+{% endblock %}

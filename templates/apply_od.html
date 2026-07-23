@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block title %}Apply OD{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 760px;">
+  <div class="page-heading">
+    <div>
+      <h1>Apply for On-Duty</h1>
+      <p class="section-note mb-0">Submit your event date, reason, and proof so the request reaches the right reviewer.</p>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ csrf_input() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="event_date" class="form-label">Event date</label>
+        <input type="date" class="form-control" id="event_date" name="event_date" required>
+      </div>
+      <div class="col-12">
+        <label for="reason" class="form-label">Reason</label>
+        <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Describe the OD event and purpose" required></textarea>
+      </div>
+      <div class="col-12">
+        <label for="proof" class="form-label">Proof upload</label>
+        <input type="file" class="form-control" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf">
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Submit OD request</button>
+      <a href="{{ url_for('ods.my_ods') }}" class="btn btn-secondary">Back to my ODs</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

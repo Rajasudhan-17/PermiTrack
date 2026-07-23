@@ -1,0 +1,174 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="hero-panel mb-4">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow mb-3">Dashboard</p>
+      <h1 class="page-title">Welcome, {{ current_user.full_name or current_user.username }}</h1>
+      <p class="page-subtitle mb-0">
+        You are signed in as <strong>{{ current_user.role|upper }}</strong>.
+        {% if current_user.role == 'student' %}
+          Track your requests, balances, and OD proofs from one place.
+        {% elif current_user.role in ['faculty', 'hod'] %}
+          Review pending requests quickly and keep your department moving.
+        {% else %}
+          Configure the full system from departments to approval ownership.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="metric-grid mt-4">
+    <div class="metric-card">
+      <span class="metric-label">
+        {% if current_user.role == 'admin' %}
+          Total Users
+        {% else %}
+          Leave Balance
+        {% endif %}
+      </span>
+      <span class="metric-value">
+        {% if current_user.role == 'admin' %}
+          {{ admin_user_count }}
+        {% else %}
+          {{ current_user.leave_balance }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="metric-card">
+      {% if current_user.role == 'admin' %}
+        <span class="metric-label">Departments / Classes</span>
+        <span class="metric-value">{{ admin_department_count }} / {{ admin_class_count }}</span>
+      {% else %}
+        <span class="metric-label">
+          {% if current_user.role == 'faculty' %}
+            Leaves Waiting
+          {% elif current_user.role == 'hod' %}
+            Dept Leaves Waiting
+          {% else %}
+            Leaves Applied
+          {% endif %}
+        </span>
+        <span class="metric-value">{{ pending_leave_count if current_user.role in ['faculty', 'hod'] else applied_leave_count }}</span>
+      {% endif %}
+    </div>
+    <div class="metric-card">
+      {% if current_user.role == 'admin' %}
+        <span class="metric-label">Leaves / ODs</span>
+        <span class="metric-value">{{ admin_leave_count }} / {{ admin_od_count }}</span>
+      {% else %}
+        <span class="metric-label">
+          {% if current_user.role == 'faculty' %}
+            ODs Waiting
+          {% elif current_user.role == 'hod' %}
+            Dept ODs Waiting
+          {% else %}
+            ODs Applied
+          {% endif %}
+        </span>
+        <span class="metric-value">{{ pending_od_count if current_user.role in ['faculty', 'hod'] else applied_od_count }}</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h2>Quick actions</h2>
+      <p class="section-note mb-0">Jump straight into the tasks that matter for your role.</p>
+    </div>
+  </div>
+
+  <div class="action-grid">
+    {% if current_user.role == 'student' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
+        <div class="dashboard-icon">L</div>
+        <h3>Apply Leave</h3>
+        <p>Submit a new leave request with date validation and instant feedback.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
+        <div class="dashboard-icon">M</div>
+        <h3>My Leaves</h3>
+        <p>See all leave requests, statuses, and reviewer comments in one table.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.apply_od') }}">
+        <div class="dashboard-icon">O</div>
+        <h3>Apply OD</h3>
+        <p>Upload proof and send your OD request through the proper approval chain.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.my_ods') }}">
+        <div class="dashboard-icon">T</div>
+        <h3>Track ODs</h3>
+        <p>Review every OD request, proof upload, and final outcome.</p>
+      </a>
+    {% elif current_user.role == 'faculty' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
+        <div class="dashboard-icon">L</div>
+        <h3>Apply Leave</h3>
+        <p>Create your own leave request with the same validation workflow as students.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
+        <div class="dashboard-icon">M</div>
+        <h3>My Leaves</h3>
+        <p>Track your own leave requests and comments separately from review work.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
+        <div class="dashboard-icon">R</div>
+        <h3>Review Leaves</h3>
+        <p>Open pending leave requests that belong to your review queue.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Handle pending OD approvals with proof access and comments.</p>
+      </a>
+    {% elif current_user.role == 'hod' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
+        <div class="dashboard-icon">R</div>
+        <h3>Review Leaves</h3>
+        <p>Open pending leave requests that belong to your review queue.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Handle pending OD approvals with proof access and comments.</p>
+      </a>
+    {% elif current_user.role == 'admin' %}
+      <a class="dashboard-link" href="{{ url_for('admin.create_department') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Departments</h3>
+        <p>Create departments and keep HOD assignments organized.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.create_class') }}">
+        <div class="dashboard-icon">C</div>
+        <h3>Classes</h3>
+        <p>Create class groups and wire them into the approval structure.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.admin_create_user') }}">
+        <div class="dashboard-icon">U</div>
+        <h3>Users</h3>
+        <p>Create students, faculty, HODs, and admins with the correct assignments.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.assign_faculty') }}">
+        <div class="dashboard-icon">F</div>
+        <h3>Assign Faculty</h3>
+        <p>Connect classes to faculty reviewers so requests route properly.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.assign_hod') }}">
+        <div class="dashboard-icon">H</div>
+        <h3>Assign HOD</h3>
+        <p>Map each department to its final approver.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('admin.admin_all_leaves') }}">
+        <div class="dashboard-icon">A</div>
+        <h3>Audit Leaves</h3>
+        <p>Review all leave activity across the application.</p>
+      </a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

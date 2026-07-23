@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 760px;">
+  <div class="page-heading">
+    <div>
+      <h1>My Profile</h1>
+      <p class="section-note mb-0">Update your account information or change your password below.</p>
+    </div>
+  </div>
+
+  <form method="post">
+    {{ csrf_input() }}
+    
+    <div class="row g-3">
+      <!-- Read-Only Info -->
+      <div class="col-md-6">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" value="{{ current_user.username }}" readonly disabled>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Role</label>
+        <input type="text" class="form-control text-uppercase" value="{{ current_user.role }}" readonly disabled>
+      </div>
+
+      <div class="col-12">
+        <hr class="soft-divider">
+      </div>
+
+      <!-- Editable Details -->
+      <div class="col-md-6">
+        <label for="full_name" class="form-label">Full name</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ current_user.full_name or '' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email address</label>
+        <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+      </div>
+
+      <div class="col-12">
+        <hr class="soft-divider">
+        <h3 class="h5 mt-2 mb-3" style="color: #9de7ff;">Change Password (Optional)</h3>
+      </div>
+
+      <!-- Password Change -->
+      <div class="col-md-6">
+        <label for="new_password" class="form-label">New password</label>
+        <input type="password" id="new_password" name="new_password" class="form-control" placeholder="Leave blank to keep current">
+      </div>
+      <div class="col-md-6">
+        <label for="confirm_password" class="form-label">Confirm new password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm new password">
+      </div>
+
+      <div class="col-12">
+        <hr class="soft-divider">
+        <div class="role-panel">
+          <div class="role-panel-title">Security Verification</div>
+          <label for="current_password" class="form-label">Current password <span class="text-danger">*</span></label>
+          <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Enter your current password to authorize changes" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Save changes</button>
+      <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

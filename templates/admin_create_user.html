@@ -1,0 +1,205 @@
+{% extends "layout.html" %}
+
+{% block title %}Create User{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 860px;">
+  <div class="page-heading">
+    <div>
+      <h1>Create User</h1>
+      <p class="section-note mb-0">Create role-specific profiles with the right department and class assignment flow.</p>
+    </div>
+  </div>
+
+  <form method="post">
+    {{ csrf_input() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="full_name" class="form-label">Full name</label>
+        <input type="text" class="form-control" id="full_name" name="full_name" required>
+      </div>
+      <div class="col-md-6">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+      </div>
+      <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      <div class="col-md-4">
+        <label for="role" class="form-label">Role</label>
+        <select class="form-select" id="role" name="role" required>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="hod">HOD</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="student-fields" class="role-panel mt-4">
+      <div class="role-panel-title">Student Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="student_department_id" class="form-label">Department</label>
+          <select class="form-select" id="student_department_id" name="student_department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="student_year" class="form-label">Year</label>
+          <select class="form-select" id="student_year" name="student_year">
+            <option value="">Select year</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="student_section" class="form-label">Section</label>
+          <select class="form-select" id="student_section" name="student_section">
+            <option value="">Select section</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="faculty-fields" class="role-panel mt-4 d-none">
+      <div class="role-panel-title">Faculty Details</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="faculty_department_id" class="form-label">Department</label>
+          <select class="form-select" id="faculty_department_id" name="faculty_department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="faculty_year" class="form-label">Year</label>
+          <select class="form-select" id="faculty_year" name="faculty_year">
+            <option value="">Select year</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="faculty_section" class="form-label">Section</label>
+          <select class="form-select" id="faculty_section" name="faculty_section">
+            <option value="">Select section</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="hod-fields" class="role-panel mt-4 d-none">
+      <div class="role-panel-title">HOD Details</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="hod_department_id" class="form-label">Department</label>
+          <select class="form-select role-department" id="hod_department_id" name="hod_department_id" data-target-hidden="department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-fields" class="role-panel mt-4 d-none">
+      <div class="role-panel-title">Admin Details</div>
+      <p class="section-note mb-0">Admins do not require class or department assignment during creation.</p>
+    </div>
+
+    <input type="hidden" name="department_id" id="shared_department_id">
+    <input type="hidden" name="class_group_id" id="shared_class_group_id">
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Create user</button>
+    </div>
+  </form>
+</section>
+
+<section class="content-card mx-auto mt-4" style="max-width: 1100px;">
+  <div class="page-heading">
+    <div>
+      <h2 class="h4 mb-1">Existing Users</h2>
+      <p class="section-note mb-0">Admins can remove accounts here. Deleting a user also removes that user's linked leave and OD records.</p>
+    </div>
+  </div>
+
+  {% if users %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Class</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td>{{ user.full_name or "-" }}</td>
+              <td>{{ user.username }}</td>
+              <td><span class="badge bg-secondary">{{ user.role|upper }}</span></td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.department.name if user.department else "-" }}</td>
+              <td>
+                {% if user.class_group %}
+                  {{ user.class_group.department.name }} Y{{ user.class_group.year }}{{ user.class_group.section }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {% if user.id == current_user.id %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Current admin</button>
+                {% else %}
+                  <form method="post" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="d-inline">
+                    {{ csrf_input() }}
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Delete {{ user.full_name or user.username }} and their related leave/OD data? This cannot be undone.');"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No users found.</div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="class-group-data" type="application/json">
+  [
+    {% for cg in classes %}
+      {
+        "id": "{{ cg.id }}",
+        "departmentId": "{{ cg.department_id }}",
+        "year": "{{ cg.year }}",
+        "section": "{{ cg.section }}"
+      }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+<script src="{{ url_for('static', filename='admin_create_user.js') }}"></script>
+{% endblock %}

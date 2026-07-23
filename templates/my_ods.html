@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block title %}My ODs{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>My OD Requests</h1>
+      <p class="section-note mb-0">Track OD approvals, reviewer comments, and proof documents.</p>
+    </div>
+    {% if current_user.role == 'student' %}
+      <a href="{{ url_for('ods.apply_od') }}" class="btn btn-primary">Apply new OD</a>
+    {% endif %}
+  </div>
+
+  {% if ods %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Event Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Proof</th>
+            <th>Review Comment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for od in ods %}
+            <tr>
+              <td>{{ od.id }}</td>
+              <td>{{ od.event_date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ od.reason }}</td>
+              <td><span class="badge bg-{{ status_badge(od.status) }}">{{ od.status.replace('_', ' ') }}</span></td>
+              <td>
+                {% if od.proof_filename %}
+                  <a href="{{ url_for('ods.send_od_proof', od_id=od.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View Proof</a>
+                {% else %}
+                  <span class="muted-text">No proof</span>
+                {% endif %}
+              </td>
+              <td>{{ od.review_comment or '-' }}</td>
+              <td>
+                {% if od.status == 'APPROVED' %}
+                  <a href="{{ url_for('ods.download_od_letter', od_id=od.id) }}" class="btn btn-sm btn-success">Download Letter</a>
+                {% else %}
+                  <span class="muted-text">-</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No OD requests yet.</div>
+  {% endif %}
+</section>
+{% endblock %}
