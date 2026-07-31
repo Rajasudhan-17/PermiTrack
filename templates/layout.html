@@ -46,9 +46,15 @@
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('leaves.apply_leave') }}">Apply Leave</a></li>
               {% endif %}
 
-              {% if current_user.role in ['faculty', 'hod'] %}
+              {% if current_user.role in ['mentor', 'faculty', 'hod'] %}
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('leaves.pending') }}">Pending Leaves</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.students_list') }}">My Students</a></li>
+              {% endif %}
+              {% if current_user.role in ['event_coordinator', 'mentor', 'faculty', 'hod'] %}
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('ods.pending_od') }}">Pending ODs</a></li>
+              {% endif %}
+              {% if current_user.role in ['admin', 'hod'] %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.assign_mentor') }}">Assign Mentor</a></li>
               {% endif %}
 
               {% if current_user.role == 'admin' %}
@@ -62,14 +68,9 @@
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.reports') }}">Reports</a></li>
               {% endif %}
 
-              {% if current_user.role == 'faculty' %}
-                <li class="nav-item"><span class="count-pill">Leaves <strong>{{ pending_leave_count }}</strong></span></li>
-                <li class="nav-item"><span class="count-pill">ODs <strong>{{ pending_od_count }}</strong></span></li>
-              {% endif %}
-
-              {% if current_user.role == 'hod' %}
-                <li class="nav-item"><span class="count-pill">Dept Leaves <strong>{{ pending_leave_count }}</strong></span></li>
-                <li class="nav-item"><span class="count-pill">Dept ODs <strong>{{ pending_od_count }}</strong></span></li>
+              {% if current_user.role in ['event_coordinator', 'mentor', 'faculty', 'hod'] %}
+                <li class="nav-item"><span class="count-pill">Pending Leaves <strong>{{ pending_leave_count }}</strong></span></li>
+                <li class="nav-item"><span class="count-pill">Pending ODs <strong>{{ pending_od_count }}</strong></span></li>
               {% endif %}
 
               <li class="nav-item"><a class="nav-link" href="{{ url_for('main.profile') }}">Profile</a></li>

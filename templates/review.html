@@ -53,6 +53,9 @@
     {% endif %}
   </div>
 
+  {% if leave.status == 'MENTOR_APPROVED' and current_user.role == 'faculty' %}
+    <div class="alert alert-info mb-4">Mentor comment: {{ leave.review_comment or 'No comment provided.' }}</div>
+  {% endif %}
   {% if leave.status == 'FACULTY_APPROVED' and current_user.role == 'hod' %}
     <div class="alert alert-info mb-4">Faculty comment: {{ leave.review_comment or 'No comment provided.' }}</div>
   {% endif %}

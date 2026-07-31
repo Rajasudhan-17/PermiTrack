@@ -9,6 +9,7 @@ from ..services.emailing import send_email
 from ..services.uploads import build_file_response, save_uploaded_file, uploaded_file_exists, validate_uploaded_proof
 from ..services.workflows import apply_od_review, can_review_od, get_assigned_faculty_for_user, is_hod_for_user
 from ..services.reports import generate_od_letter_pdf
+from ..services.audit import log_audit_event
 
 
 bp = Blueprint("ods", __name__)
@@ -21,13 +22,18 @@ def apply_od():
         flash("Only students can apply for OD through this workflow.", "danger")
         return redirect(url_for("main.index"))
 
+    if getattr(current_user, "is_blocked", False):
+        flash("You have been blocked from applying for Leave and OD. Please contact your Faculty / Mentor / HOD.", "danger")
+        return redirect(url_for("main.index"))
+
     if request.method == "POST":
         event_date_raw = request.form.get("event_date")
         reason = request.form.get("reason", "").strip()
         proof = request.files.get("proof")
+        event_coordinator_id = request.form.get("event_coordinator_id", type=int)
 
-        if not event_date_raw or not reason:
-            flash("Event date and reason are required.", "danger")
+        if not event_date_raw or not reason or not event_coordinator_id:
+            flash("Event date, reason, and Event Coordinator are required.", "danger")
             return redirect(url_for("ods.apply_od"))
 
         try:
@@ -58,6 +64,7 @@ def apply_od():
         od = OD(
             requested_by=current_user.id,
             faculty_id=assigned_faculty_id,
+            event_coordinator_id=event_coordinator_id,
             event_date=event_date,
             reason=reason,
             proof_filename=proof_filename,
@@ -66,15 +73,16 @@ def apply_od():
         )
         db.session.add(od)
         db.session.commit()
+        log_audit_event("OD_REQUESTED", od)
 
-        assigned_faculty = db.session.get(User, assigned_faculty_id)
-        if assigned_faculty and assigned_faculty.email:
+        event_coordinator = db.session.get(User, event_coordinator_id)
+        if event_coordinator and event_coordinator.email:
             try:
                 send_email(
                     "New OD Request Submitted",
-                    [assigned_faculty.email],
+                    [event_coordinator.email],
                     (
-                        f"Hello {assigned_faculty.full_name or assigned_faculty.username},\n\n"
+                        f"Hello {event_coordinator.full_name or event_coordinator.username},\n\n"
                         f"{current_user.full_name or current_user.username} submitted an OD request for {event_date}.\n\n"
                         f"Reason: {reason}\n"
                     ),
@@ -85,7 +93,8 @@ def apply_od():
         flash("OD request submitted successfully.", "success")
         return redirect(url_for("ods.my_ods"))
 
-    return render_template("apply_od.html")
+    event_coordinators = User.query.filter_by(role=Role.EVENT_COORDINATOR.value).all()
+    return render_template("apply_od.html", event_coordinators=event_coordinators)
 
 
 @bp.route("/my_ods")
@@ -98,10 +107,22 @@ def my_ods():
 @bp.route("/pending_od")
 @login_required
 def pending_od():
-    if current_user.role == Role.FACULTY.value:
+    if current_user.role == Role.EVENT_COORDINATOR.value:
+        ods = OD.query.filter_by(
+            event_coordinator_id=current_user.id,
+            status=RequestStatus.PENDING.value,
+        ).order_by(OD.applied_on.asc()).all()
+    elif current_user.role == Role.MENTOR.value:
+        ods = (
+            OD.query.join(User, User.id == OD.requested_by)
+            .filter(User.mentor_id == current_user.id, OD.status == RequestStatus.EVENT_COORDINATOR_APPROVED.value)
+            .order_by(OD.applied_on.asc())
+            .all()
+        )
+    elif current_user.role == Role.FACULTY.value:
         ods = OD.query.filter_by(
             faculty_id=current_user.id,
-            status=RequestStatus.PENDING.value,
+            status=RequestStatus.MENTOR_APPROVED.value,
         ).order_by(OD.applied_on.asc()).all()
     elif current_user.role == Role.HOD.value:
         ods = (
@@ -162,6 +183,8 @@ def send_od_proof(od_id):
     allowed = (
         current_user.role == Role.ADMIN.value
         or current_user.id == od.requested_by
+        or (current_user.role == Role.EVENT_COORDINATOR.value and od.event_coordinator_id == current_user.id)
+        or (current_user.role == Role.MENTOR.value and requester and requester.mentor_id == current_user.id)
         or (current_user.role == Role.FACULTY.value and od.faculty_id == current_user.id)
         or (requester and current_user.role == Role.HOD.value and is_hod_for_user(current_user, requester))
     )
@@ -175,6 +198,7 @@ def send_od_proof(od_id):
         target = "ods.my_ods" if current_user.role == Role.STUDENT.value else "ods.pending_od"
         return redirect(url_for(target))
 
+    log_audit_event("OD_PROOF_DOWNLOADED", od)
     return build_file_response(current_app.config["OD_UPLOAD_PREFIX"], od.proof_filename, od.proof_mimetype)
 
 
@@ -194,6 +218,8 @@ def download_od_letter(od_id):
     allowed = (
         current_user.role == Role.ADMIN.value
         or current_user.id == od.requested_by
+        or (current_user.role == Role.EVENT_COORDINATOR.value and od.event_coordinator_id == current_user.id)
+        or (current_user.role == Role.MENTOR.value and requester and requester.mentor_id == current_user.id)
         or (current_user.role == Role.FACULTY.value and od.faculty_id == current_user.id)
         or (requester and current_user.role == Role.HOD.value and is_hod_for_user(current_user, requester))
     )
@@ -203,6 +229,7 @@ def download_od_letter(od_id):
         return redirect(url_for("main.index"))
 
     pdf_data = generate_od_letter_pdf(od)
+    log_audit_event("OD_LETTER_DOWNLOADED", od)
     return Response(
         pdf_data,
         mimetype="application/pdf",

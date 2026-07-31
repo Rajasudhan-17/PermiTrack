@@ -11,10 +11,14 @@ class Role(StrEnum):
     FACULTY = "faculty"
     HOD = "hod"
     ADMIN = "admin"
+    MENTOR = "mentor"
+    EVENT_COORDINATOR = "event_coordinator"
 
 
 class RequestStatus(StrEnum):
     PENDING = "PENDING"
+    EVENT_COORDINATOR_APPROVED = "EVENT_COORDINATOR_APPROVED"
+    MENTOR_APPROVED = "MENTOR_APPROVED"
     FACULTY_APPROVED = "FACULTY_APPROVED"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
@@ -92,13 +96,21 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), default=Role.STUDENT.value, nullable=False)
     leave_balance = db.Column(db.Integer, default=20, nullable=False)
     faculty_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    mentor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey("department.id"), nullable=True)
     class_group_id = db.Column(db.Integer, db.ForeignKey("class_group.id"), nullable=True)
+    register_number = db.Column(db.String(50), unique=True, nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=True)
+    father_name = db.Column(db.String(150), nullable=True)
     version_id = db.Column(db.Integer, nullable=False, default=1)
+    is_blocked = db.Column(db.Boolean, default=False, nullable=False)
+    api_token = db.Column(db.String(255), unique=True, nullable=True)
+    token_expires_at = db.Column(db.DateTime, nullable=True)
 
     __mapper_args__ = {"version_id_col": version_id}
 
-    faculty = db.relationship("User", remote_side=[id], backref="students")
+    faculty = db.relationship("User", remote_side=[id], foreign_keys=[faculty_id], backref="students")
+    mentor = db.relationship("User", remote_side=[id], foreign_keys=[mentor_id], backref="mentored_students")
     department = db.relationship("Department", foreign_keys=[department_id], backref="users", uselist=False)
     class_group = db.relationship("ClassGroup", foreign_keys=[class_group_id], backref="students", uselist=False)
     requested_leaves = db.relationship("Leave", foreign_keys="Leave.requested_by", backref="requester", lazy=True)
@@ -172,6 +184,7 @@ class OD(db.Model):
     proof_mimetype = db.Column(db.String(120), nullable=True)
     status = db.Column(db.String(20), default=RequestStatus.PENDING.value, nullable=False)
     faculty_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    event_coordinator_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     applied_on = db.Column(db.DateTime, default=utcnow, nullable=False)
     review_comment = db.Column(db.Text, nullable=True)
     reviewed_on = db.Column(db.DateTime, nullable=True)
@@ -180,6 +193,7 @@ class OD(db.Model):
     __mapper_args__ = {"version_id_col": version_id}
 
     faculty = db.relationship("User", foreign_keys=[faculty_id])
+    event_coordinator = db.relationship("User", foreign_keys=[event_coordinator_id])
     requester = db.relationship("User", foreign_keys=[requested_by])
     approver = db.relationship("User", foreign_keys=[approved_by])
 
@@ -239,4 +253,25 @@ class OTPToken(db.Model):
     is_used = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship("User", backref="otps")
+
+
+class AuditLog(db.Model):
+    __tablename__ = "audit_log"
+    __table_args__ = (
+        db.Index("ix_audit_log_timestamp", "timestamp"),
+        db.Index("ix_audit_log_actor_id", "actor_id"),
+        db.Index("ix_audit_log_action", "action"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=utcnow, nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    action = db.Column(db.String(100), nullable=False)
+    target_type = db.Column(db.String(50), nullable=True)
+    target_id = db.Column(db.Integer, nullable=True)
+    ip_address = db.Column(db.String(64), nullable=True)
+    details = db.Column(db.Text, nullable=True)
+
+    actor = db.relationship("User", foreign_keys=[actor_id])
+
 

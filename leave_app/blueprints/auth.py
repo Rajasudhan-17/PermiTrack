@@ -3,10 +3,18 @@ from datetime import timedelta
 from flask import Blueprint, flash, redirect, render_template, request, url_for, session, current_app
 from flask_login import current_user, login_required, login_user, logout_user
 
-from ..services.auth_security import clear_failed_logins, login_allowed, register_failed_login
+from ..services.auth_security import (
+    clear_failed_logins,
+    login_allowed,
+    register_failed_login,
+    otp_allowed,
+    register_failed_otp,
+    clear_failed_otps,
+)
 from ..models import User, OTPToken, utcnow
 from ..services.emailing import send_email
 from ..extensions import db
+from ..services.audit import log_audit_event
 
 
 bp = Blueprint("auth", __name__)
@@ -36,10 +44,12 @@ def login():
         if user and user.check_password(password):
             clear_failed_logins(username, client_ip)
             login_user(user)
+            log_audit_event("LOGIN_SUCCESS", user)
             flash(f"Welcome back, {user.full_name or user.username}.", "success")
             return redirect(url_for("main.index"))
 
         register_failed_login(username, client_ip)
+        log_audit_event("LOGIN_FAILED", details=f"Username attempted: {username}")
         flash("Invalid username or password.", "danger")
         return redirect(url_for("auth.login"))
 
@@ -49,6 +59,7 @@ def login():
 @bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
+    log_audit_event("LOGOUT", current_user)
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("main.index"))
@@ -97,6 +108,7 @@ def forgot_password():
         )
         try:
             send_email(subject, [user.email], body)
+            log_audit_event("PASSWORD_RESET_REQUESTED", user)
             session["reset_email"] = user.email
             flash("An OTP has been sent to your email. Please verify it to reset your password.", "success")
             return redirect(url_for("auth.verify_otp"))
@@ -118,10 +130,18 @@ def verify_otp():
         flash("Please request a password reset first.", "warning")
         return redirect(url_for("auth.forgot_password"))
 
+    client_ip = request.remote_addr or "unknown"
+
     if request.method == "POST":
         otp_input = request.form.get("otp", "").strip()
         new_password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
+
+        allowed, locked_until = otp_allowed(email, client_ip)
+        if not allowed:
+            locked_until_display = locked_until.strftime("%Y-%m-%d %H:%M:%S") if locked_until else "later"
+            flash(f"Too many failed OTP attempts. Try again after {locked_until_display}.", "danger")
+            return render_template("verify_otp.html")
 
         if not otp_input or not new_password or not confirm_password:
             flash("All fields are required.", "danger")
@@ -133,6 +153,8 @@ def verify_otp():
 
         user = User.query.filter_by(email=email).first()
         if not user:
+            register_failed_otp(email, client_ip)
+            log_audit_event("PASSWORD_RESET_FAILED", details=f"User not found for email: {email}")
             flash("User not found.", "danger")
             return redirect(url_for("auth.forgot_password"))
 
@@ -146,12 +168,16 @@ def verify_otp():
         ).first()
 
         if not otp_token:
+            register_failed_otp(email, client_ip)
+            log_audit_event("PASSWORD_RESET_FAILED", user, details="Invalid or expired OTP")
             flash("Invalid or expired OTP.", "danger")
             return render_template("verify_otp.html")
 
         # OTP is valid, mark it as used and reset password
         otp_token.is_used = True
         user.set_password(new_password)
+        clear_failed_otps(email, client_ip)
+        log_audit_event("PASSWORD_RESET_SUCCESS", user)
         db.session.commit()
 
         # Clear reset session info

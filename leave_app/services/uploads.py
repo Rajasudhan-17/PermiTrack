@@ -115,6 +115,16 @@ def validate_uploaded_proof(file_storage):
         return None, None, "Uploaded proof does not match an allowed file type."
 
     extension = file_storage.filename.rsplit(".", 1)[1].lower()
+    expected_extensions = {
+        "image/png": {"png"},
+        "image/jpeg": {"jpg", "jpeg"},
+        "image/gif": {"gif"},
+        "application/pdf": {"pdf"}
+    }
+    allowed_exts = expected_extensions.get(detected_mimetype, set())
+    if extension not in allowed_exts:
+        return None, None, "File extension does not match file content."
+
     safe_filename = f"{utcnow().strftime('%Y%m%d%H%M%S')}_{uuid4().hex}.{extension}"
     return safe_filename, detected_mimetype, None
 

@@ -370,20 +370,21 @@ HOD (Head of Department)
 
 ### Permission Matrix
 
-| Action | Student | Faculty | HOD | Admin |
-|--------|---------|---------|-----|-------|
-| Apply Leave | ✓ | ✓ | ✗ | ✓ |
-| Apply OD | ✓ | ✗ | ✗ | ✗ |
-| Review Pending Leaves | ✗ | ✓ (assigned class) | ✓ (dept) | ✓ |
-| Review Pending ODs | ✗ | ✓ (assigned) | ✓ (dept) | ✓ |
-| Upload Leave Proof | ✓ (own emergency) | ✓ (own emergency) | ✓ (own emergency) | ✗ |
-| Create Department | ✗ | ✗ | ✗ | ✓ |
-| Create Class | ✗ | ✗ | ✗ | ✓ |
-| Assign Faculty | ✗ | ✗ | ✗ | ✓ |
-| Create Users | ✗ | ✗ | ✗ | ✓ |
-| View Reports | ✗ | ✗ | ✗ | ✓ |
-| Delete Requests | ✗ | ✗ | ✗ | ✓ |
-| Reset Balances | ✗ | ✗ | ✗ | ✓ |
+| Action | Student | Faculty | Mentor | Event Coordinator | HOD | Admin |
+|--------|---------|---------|--------|-------------------|-----|-------|
+| Apply Leave | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ |
+| Apply OD | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Review Pending Leaves | ✗ | ✓ (assigned class) | ✓ (mentored) | ✗ | ✓ (dept) | ✓ |
+| Review Pending ODs | ✗ | ✓ (assigned) | ✓ (mentored) | ✓ (assigned event) | ✓ (dept) | ✓ |
+| Upload Leave Proof | ✓ (own emergency) | ✓ (own emergency) | ✓ (own emergency) | ✗ | ✓ (own emergency) | ✗ |
+| Create Department | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Create Class | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Assign Faculty | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Assign Mentor | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Create Users | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| View Reports | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Delete Requests | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Reset Balances | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
 
 ---
 
@@ -555,6 +556,7 @@ Status → REJECTED → Student Email
 | `/review/<id>` | GET, POST | Review leave request | Required | Faculty, HOD |
 | `/leave/<id>/upload_proof` | GET, POST | Upload emergency leave proof | Required | Requester |
 | `/leave_proof/<id>` | GET | Download leave proof | Required | Authorized |
+| `/leave/<id>/download_letter` | GET | Download leave approval letter (PDF) | Required | Authorized |
 
 ### On-Duty Blueprint (`/ods`)
 
@@ -565,6 +567,7 @@ Status → REJECTED → Student Email
 | `/pending_od` | GET | View pending OD reviews | Required | Faculty, HOD |
 | `/review_od/<id>` | GET, POST | Review OD request | Required | Faculty, HOD |
 | `/od_proof/<id>` | GET | Download OD proof | Required | Authorized |
+| `/od/<id>/download_letter` | GET | Download OD approval letter (PDF) | Required | Authorized |
 
 ### Admin Blueprint (`/admin`)
 
@@ -733,6 +736,20 @@ HOD View (for department):
 - Awaiting HOD decision
 ```
 
+#### 8. Leave Approval Letter Download
+**Endpoint**: `GET /leave/<leave_id>/download_letter`
+```
+Access Control:
+- Requester can download their own approved letter
+- Mentor can download for their mentored students
+- Faculty can download for students in their assigned class
+- HOD can download for students in their department
+- Admin can download any approved letter
+
+Returns:
+- Dynamically generated PDF containing the official leave approval status and remarks
+```
+
 ---
 
 ## On-Duty (OD) Management System
@@ -810,6 +827,8 @@ Processing if REJECT:
 ```
 Access Control:
 - Requester can always download
+- Event Coordinator can download for assigned ODs
+- Mentor can download for mentored students
 - Faculty can download for assigned ODs
 - HOD can download for department ODs
 - Admin can download any
@@ -839,6 +858,21 @@ HOD View:
 - Displays FACULTY_APPROVED ODs from department
 - Ready for final decision
 - Shows faculty's initial comment
+```
+
+#### 7. OD Approval Letter Download
+**Endpoint**: `GET /od/<od_id>/download_letter`
+```
+Access Control:
+- Requester can download their own approved letter
+- Event Coordinator can download for assigned ODs
+- Mentor can download for mentored students
+- Faculty can download for assigned ODs
+- HOD can download for department ODs
+- Admin can download any approved letter
+
+Returns:
+- Dynamically generated PDF containing the official OD approval status and event details
 ```
 
 ---
@@ -1023,6 +1057,7 @@ Seed Data Provided:
 - **Password Hashing**: Werkzeug generate_password_hash
 - **Password Verification**: Werkzeug check_password_hash
 - **Login Rate Limiting**: LoginAttempt model tracks failed attempts
+- **OTP Verification Rate Limiting**: Prevents brute-forcing password reset OTPs
 
 ### 2. Login Rate Limiting
 **Implementation**: `services/auth_security.py`
@@ -1041,6 +1076,23 @@ Process:
 5. On successful login, clear attempt record
 ```
 
+### 2b. Password Reset OTP Rate Limiting
+**Implementation**: `services/auth_security.py`
+```python
+# Configuration
+- Max attempts: 5 failures
+- Time window: 15 minutes
+- Lockout duration: 15 minutes
+- Tracking by: email + IP address (using key `otp|<email>|<ip_address>` in `LoginAttempt` model)
+
+Process:
+1. Check if OTP verification is allowed (locked_until > now)
+2. If locked, deny access and display lockout duration
+3. If verification fails (invalid/expired OTP), register failure
+4. If attempts >= threshold, set locked_until = now + lockout_duration
+5. On successful password reset, clear attempt record
+```
+
 ### 3. Authorization (Role-Based Access Control)
 - **Route Decorators**: `@admin_required`, `@login_required`
 - **Endpoint Validation**: Check user role and permissions
@@ -1048,6 +1100,8 @@ Process:
   - Can only review own class's leaves
   - Can only upload proof for own requests
   - HOD can only approve from own department
+  - Event Coordinators can access and review OD requests assigned to them
+  - Mentors can access and review OD/leave requests from their mentored students
 
 ### 4. Data Protection
 - **Optimistic Locking**: All request models use version_id

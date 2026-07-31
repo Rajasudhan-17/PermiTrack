@@ -115,3 +115,90 @@ def clear_failed_logins(username, ip_address):
             )
             return
         raise
+
+
+def otp_allowed(email, ip_address):
+    if not current_app.config.get("LOGIN_RATE_LIMIT_ENABLED", True):
+        return True, None
+
+    attempt = _safe_get_login_attempt(f"otp|{email}|{ip_address}")
+    if not attempt:
+        return True, None
+
+    now = utcnow()
+    if attempt.locked_until and attempt.locked_until > now:
+        return False, attempt.locked_until
+
+    window_seconds = current_app.config["LOGIN_RATE_LIMIT_WINDOW_SECONDS"]
+    if (now - attempt.window_started_at).total_seconds() > window_seconds:
+        db.session.delete(attempt)
+        db.session.commit()
+        return True, None
+
+    return True, None
+
+
+def register_failed_otp(email, ip_address):
+    if not current_app.config.get("LOGIN_RATE_LIMIT_ENABLED", True):
+        return
+
+    now = utcnow()
+    key = f"otp|{email}|{ip_address}"
+    attempt = _safe_get_login_attempt(key)
+    window_seconds = current_app.config["LOGIN_RATE_LIMIT_WINDOW_SECONDS"]
+    max_attempts = current_app.config["LOGIN_RATE_LIMIT_MAX_ATTEMPTS"]
+
+    if not attempt:
+        attempt = LoginAttempt(
+            key=key,
+            username=(email or "").strip().lower()[:80],
+            ip_address=ip_address or "unknown",
+            attempt_count=0,
+            window_started_at=now,
+            last_attempt_at=now,
+        )
+        db.session.add(attempt)
+
+    if (now - attempt.window_started_at).total_seconds() > window_seconds:
+        attempt.attempt_count = 0
+        attempt.window_started_at = now
+        attempt.locked_until = None
+
+    attempt.attempt_count += 1
+    attempt.last_attempt_at = now
+
+    if attempt.attempt_count >= max_attempts:
+        attempt.locked_until = now + timedelta(seconds=window_seconds)
+
+    try:
+        db.session.commit()
+    except (OperationalError, ProgrammingError) as exc:
+        db.session.rollback()
+        if _login_attempt_table_missing(exc):
+            current_app.logger.warning(
+                "Skipping failed-otp persistence because the login_attempt table is missing."
+            )
+            return
+        raise
+
+
+def clear_failed_otps(email, ip_address):
+    if not current_app.config.get("LOGIN_RATE_LIMIT_ENABLED", True):
+        return
+
+    attempt = _safe_get_login_attempt(f"otp|{email}|{ip_address}")
+    if not attempt:
+        return
+
+    db.session.delete(attempt)
+    try:
+        db.session.commit()
+    except (OperationalError, ProgrammingError) as exc:
+        db.session.rollback()
+        if _login_attempt_table_missing(exc):
+            current_app.logger.warning(
+                "Skipping failed-otp cleanup because the login_attempt table is missing."
+            )
+            return
+        raise
+

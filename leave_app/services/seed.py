@@ -65,7 +65,34 @@ def ensure_seed_data():
         class_group.faculty_id = faculty.id
         db.session.commit()
 
+    if not User.query.filter_by(username="mentor").first():
+        mentor = User(
+            username="mentor",
+            email="mentor@example.com",
+            full_name="Mentor One",
+            role=Role.MENTOR.value,
+            leave_balance=20,
+            department_id=cs_department.id,
+        )
+        mentor.set_password(os.environ.get("INIT_MENTOR_PASSWORD", "change-me-mentor"))
+        db.session.add(mentor)
+        db.session.commit()
+
+    if not User.query.filter_by(username="coordinator").first():
+        coordinator = User(
+            username="coordinator",
+            email="coordinator@example.com",
+            full_name="Event Coordinator",
+            role=Role.EVENT_COORDINATOR.value,
+            leave_balance=20,
+            department_id=cs_department.id,
+        )
+        coordinator.set_password(os.environ.get("INIT_COORDINATOR_PASSWORD", "change-me-coordinator"))
+        db.session.add(coordinator)
+        db.session.commit()
+
     if not User.query.filter_by(username="student").first():
+        mentor_user = User.query.filter_by(username="mentor").first()
         student = User(
             username="student",
             email="student@example.com",
@@ -74,6 +101,7 @@ def ensure_seed_data():
             class_group_id=class_group.id,
             department_id=cs_department.id,
             leave_balance=20,
+            mentor_id=mentor_user.id if mentor_user else None,
         )
         student.set_password(os.environ.get("INIT_STUDENT_PASSWORD", "change-me-student"))
         db.session.add(student)

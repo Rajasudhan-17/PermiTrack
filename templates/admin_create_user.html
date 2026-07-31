@@ -36,6 +36,8 @@
           <option value="student">Student</option>
           <option value="faculty">Faculty</option>
           <option value="hod">HOD</option>
+          <option value="mentor">Mentor</option>
+          <option value="event_coordinator">Event Coordinator</option>
           <option value="admin">Admin</option>
         </select>
       </div>
@@ -64,6 +66,18 @@
           <select class="form-select" id="student_section" name="student_section">
             <option value="">Select section</option>
           </select>
+        </div>
+        <div class="col-md-4">
+          <label for="student_register_number" class="form-label">Register Number</label>
+          <input type="text" class="form-control" id="student_register_number" name="student_register_number">
+        </div>
+        <div class="col-md-4">
+          <label for="student_date_of_birth" class="form-label">Date of Birth</label>
+          <input type="date" class="form-control" id="student_date_of_birth" name="student_date_of_birth">
+        </div>
+        <div class="col-md-4">
+          <label for="student_father_name" class="form-label">Father's Name</label>
+          <input type="text" class="form-control" id="student_father_name" name="student_father_name">
         </div>
       </div>
     </div>
@@ -110,6 +124,36 @@
       </div>
     </div>
 
+    <div id="mentor-fields" class="role-panel mt-4 d-none">
+      <div class="role-panel-title">Mentor Details</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="mentor_department_id" class="form-label">Department</label>
+          <select class="form-select role-department" id="mentor_department_id" name="mentor_department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="event_coordinator-fields" class="role-panel mt-4 d-none">
+      <div class="role-panel-title">Event Coordinator Details</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="event_coordinator_department_id" class="form-label">Department</label>
+          <select class="form-select role-department" id="event_coordinator_department_id" name="event_coordinator_department_id">
+            <option value="">Select department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
     <div id="admin-fields" class="role-panel mt-4 d-none">
       <div class="role-panel-title">Admin Details</div>
       <p class="section-note mb-0">Admins do not require class or department assignment during creation.</p>
@@ -130,6 +174,48 @@
       <h2 class="h4 mb-1">Existing Users</h2>
       <p class="section-note mb-0">Admins can remove accounts here. Deleting a user also removes that user's linked leave and OD records.</p>
     </div>
+  </div>
+
+  <div class="mb-4">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label for="filter_role" class="form-label">Role</label>
+        <select class="form-select" id="filter_role" name="filter_role">
+          <option value="">All Roles</option>
+          <option value="student" {% if filter_role == 'student' %}selected{% endif %}>Student</option>
+          <option value="faculty" {% if filter_role == 'faculty' %}selected{% endif %}>Faculty</option>
+          <option value="hod" {% if filter_role == 'hod' %}selected{% endif %}>HOD</option>
+          <option value="mentor" {% if filter_role == 'mentor' %}selected{% endif %}>Mentor</option>
+          <option value="event_coordinator" {% if filter_role == 'event_coordinator' %}selected{% endif %}>Event Coordinator</option>
+          <option value="admin" {% if filter_role == 'admin' %}selected{% endif %}>Admin</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="filter_dept_id" class="form-label">Department</label>
+        <select class="form-select" id="filter_dept_id" name="filter_dept_id">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if filter_dept_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="filter_year" class="form-label">Year</label>
+        <select class="form-select" id="filter_year" name="filter_year">
+          <option value="">All Years</option>
+          {% for y in [1, 2, 3, 4] %}
+            <option value="{{ y }}" {% if filter_year == y %}selected{% endif %}>Year {{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="filter_section" class="form-label">Section</label>
+        <input type="text" class="form-control" id="filter_section" name="filter_section" placeholder="e.g. A" value="{{ filter_section or '' }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+      </div>
+    </form>
   </div>
 
   {% if users %}

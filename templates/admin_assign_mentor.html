@@ -1,0 +1,136 @@
+{% extends "layout.html" %}
+
+{% block title %}Assign Mentor{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>Assign Mentor</h1>
+      <p class="section-note mb-0">Assign a mentor/counsellor to students. Filter by department, year, and section to find students.</p>
+    </div>
+  </div>
+
+  <!-- Search Filter Form -->
+  <div class="section-card mb-4">
+    <h3 class="mb-3">Search & Filter Students</h3>
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="search_dept_id" class="form-label">Department</label>
+        {% if current_user.role == 'hod' %}
+          <select class="form-select" id="search_dept_id" name="dept_id" disabled>
+            <option value="{{ current_user.department.id }}">{{ current_user.department.name }}</option>
+          </select>
+          <input type="hidden" name="dept_id" value="{{ current_user.department.id }}">
+        {% else %}
+          <select class="form-select" id="search_dept_id" name="dept_id">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+              <option value="{{ dept.id }}" {% if selected_dept_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+      </div>
+      <div class="col-md-3">
+        <label for="search_year" class="form-label">Year</label>
+        <select class="form-select" id="search_year" name="year">
+          <option value="">All Years</option>
+          {% for y in [1, 2, 3, 4] %}
+            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>Year {{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="search_section" class="form-label">Section</label>
+        <input type="text" class="form-control" id="search_section" name="section" placeholder="e.g. A" value="{{ selected_section or '' }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+      </div>
+    </form>
+  </div>
+
+  <form method="post" action="{{ url_for('admin.assign_mentor') }}">
+    {{ csrf_input() }}
+    <!-- Hidden inputs to retain search filters on submit -->
+    <input type="hidden" name="dept_id" value="{{ selected_dept_id or '' }}">
+    <input type="hidden" name="year" value="{{ selected_year or '' }}">
+    <input type="hidden" name="section" value="{{ selected_section or '' }}">
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="section-card">
+          <h3 class="mb-3">Students</h3>
+          {% if students %}
+            <div class="table-wrap">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;">
+                      <input type="checkbox" id="select-all-students" class="form-check-input">
+                    </th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Class</th>
+                    <th>Current Mentor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students %}
+                    <tr>
+                      <td>
+                        <input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox form-check-input">
+                      </td>
+                      <td>{{ student.full_name or student.username }}</td>
+                      <td>{{ student.username }}</td>
+                      <td>
+                        {% if student.class_group %}
+                          {{ student.class_group.department.name }} Y{{ student.class_group.year }}{{ student.class_group.section }}
+                        {% else %}
+                          -
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if student.mentor %}
+                          <span class="badge bg-success">{{ student.mentor.full_name or student.mentor.username }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Unassigned</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">No students found matching the filter criteria.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="section-card">
+          <h3 class="mb-3">Assign Mentor</h3>
+          <div class="mb-3">
+            <label for="mentor_id" class="form-label">Select Mentor/Counsellor</label>
+            <select class="form-select" id="mentor_id" name="mentor_id" required>
+              <option value="">Select Mentor</option>
+              {% for mentor in mentors %}
+                <option value="{{ mentor.id }}">{{ mentor.full_name or mentor.username }} ({{ mentor.username }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success w-100" {% if not students %}disabled{% endif %}>Assign Mentor to Selected</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
+
+<script>
+  document.getElementById('select-all-students')?.addEventListener('change', function(e) {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    checkboxes.forEach(cb => cb.checked = e.target.checked);
+  });
+</script>
+{% endblock %}

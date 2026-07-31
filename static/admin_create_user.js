@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const facultyYear = document.getElementById("faculty_year");
   const facultySection = document.getElementById("faculty_section");
   const hodDepartment = document.getElementById("hod_department_id");
+  const mentorDepartment = document.getElementById("mentor_department_id");
+  const eventCoordinatorDepartment = document.getElementById("event_coordinator_department_id");
+  const studentRegisterNumber = document.getElementById("student_register_number");
+  const studentDateOfBirth = document.getElementById("student_date_of_birth");
+  const studentFatherName = document.getElementById("student_father_name");
   const classGroupDataNode = document.getElementById("class-group-data");
   const classGroupData = classGroupDataNode ? JSON.parse(classGroupDataNode.textContent) : [];
 
@@ -16,6 +21,8 @@ document.addEventListener("DOMContentLoaded", function () {
     student: document.getElementById("student-fields"),
     faculty: document.getElementById("faculty-fields"),
     hod: document.getElementById("hod-fields"),
+    mentor: document.getElementById("mentor-fields"),
+    event_coordinator: document.getElementById("event_coordinator-fields"),
     admin: document.getElementById("admin-fields"),
   };
 
@@ -94,10 +101,15 @@ document.addEventListener("DOMContentLoaded", function () {
     studentDepartment.required = selectedRole === "student";
     studentYear.required = selectedRole === "student";
     studentSection.required = selectedRole === "student";
+    if (studentRegisterNumber) studentRegisterNumber.required = selectedRole === "student";
+    if (studentDateOfBirth) studentDateOfBirth.required = selectedRole === "student";
+    if (studentFatherName) studentFatherName.required = selectedRole === "student";
     facultyDepartment.required = selectedRole === "faculty";
     facultyYear.required = selectedRole === "faculty";
     facultySection.required = selectedRole === "faculty";
     hodDepartment.required = selectedRole === "hod";
+    if (mentorDepartment) mentorDepartment.required = selectedRole === "mentor";
+    if (eventCoordinatorDepartment) eventCoordinatorDepartment.required = selectedRole === "event_coordinator";
 
     if (selectedRole === "student") {
       sharedDepartment.value = studentDepartment.value;
@@ -109,6 +121,10 @@ document.addEventListener("DOMContentLoaded", function () {
       sharedClass.value = facultyClassGroup ? facultyClassGroup.id : "";
     } else if (selectedRole === "hod") {
       sharedDepartment.value = hodDepartment.value;
+    } else if (selectedRole === "mentor" && mentorDepartment) {
+      sharedDepartment.value = mentorDepartment.value;
+    } else if (selectedRole === "event_coordinator" && eventCoordinatorDepartment) {
+      sharedDepartment.value = eventCoordinatorDepartment.value;
     }
   }
 
@@ -137,6 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
   studentSection.addEventListener("change", syncRoleState);
   facultySection.addEventListener("change", syncRoleState);
   hodDepartment.addEventListener("change", syncRoleState);
+  if (mentorDepartment) mentorDepartment.addEventListener("change", syncRoleState);
+  if (eventCoordinatorDepartment) eventCoordinatorDepartment.addEventListener("change", syncRoleState);
   role.addEventListener("change", syncRoleState);
 
   populateYears(studentDepartment, studentYear);

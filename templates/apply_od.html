@@ -18,6 +18,15 @@
         <label for="event_date" class="form-label">Event date</label>
         <input type="date" class="form-control" id="event_date" name="event_date" required>
       </div>
+      <div class="col-md-6">
+        <label for="event_coordinator_id" class="form-label">Event Coordinator</label>
+        <select class="form-select" id="event_coordinator_id" name="event_coordinator_id" required>
+          <option value="">Select Event Coordinator</option>
+          {% for ec in event_coordinators %}
+            <option value="{{ ec.id }}">{{ ec.full_name or ec.username }} ({{ ec.username }})</option>
+          {% endfor %}
+        </select>
+      </div>
       <div class="col-12">
         <label for="reason" class="form-label">Reason</label>
         <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Describe the OD event and purpose" required></textarea>

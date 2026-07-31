@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from ..extensions import db
 from ..services.reports import generate_leave_letter_pdf
+from ..services.audit import log_audit_event
 
 from ..models import ClassGroup, Leave, OD, RequestStatus, Role, User, utcnow
 from ..services.uploads import (
@@ -31,6 +32,10 @@ bp = Blueprint("leaves", __name__)
 def apply_leave():
     if current_user.role not in (Role.STUDENT.value, Role.FACULTY.value):
         flash("Only students and faculty can apply for leave.", "danger")
+        return redirect(url_for("main.index"))
+
+    if getattr(current_user, "is_blocked", False):
+        flash("You have been blocked from applying for Leave and OD. Please contact your Faculty / Mentor / HOD.", "danger")
         return redirect(url_for("main.index"))
 
     if request.method == "POST":
@@ -82,11 +87,18 @@ def my_leaves():
 @login_required
 def pending():
     leave_conflicts = {}
-    if current_user.role == Role.FACULTY.value:
+    if current_user.role == Role.MENTOR.value:
+        leaves = (
+            Leave.query.join(User, User.id == Leave.requested_by)
+            .filter(User.mentor_id == current_user.id, Leave.status == RequestStatus.PENDING.value)
+            .order_by(Leave.is_emergency.desc(), Leave.applied_on.asc())
+            .all()
+        )
+    elif current_user.role == Role.FACULTY.value:
         leaves = (
             Leave.query.join(User, User.id == Leave.requested_by)
             .join(ClassGroup, ClassGroup.id == User.class_group_id)
-            .filter(ClassGroup.faculty_id == current_user.id, Leave.status == RequestStatus.PENDING.value)
+            .filter(ClassGroup.faculty_id == current_user.id, Leave.status == RequestStatus.MENTOR_APPROVED.value)
             .order_by(Leave.is_emergency.desc(), Leave.applied_on.asc())
             .all()
         )
@@ -190,6 +202,7 @@ def send_leave_proof(leave_id):
         flash("The proof file could not be found on the server.", "danger")
         return redirect(url_for("leaves.my_leaves"))
 
+    log_audit_event("LEAVE_PROOF_DOWNLOADED", leave)
     return build_file_response(current_app.config["LEAVE_UPLOAD_PREFIX"], leave.proof_filename, leave.proof_mimetype)
 
 
@@ -210,6 +223,7 @@ def download_leave_letter(leave_id):
         return redirect(url_for("main.index"))
 
     pdf_data = generate_leave_letter_pdf(leave)
+    log_audit_event("LEAVE_LETTER_DOWNLOADED", leave)
     return Response(
         pdf_data,
         mimetype="application/pdf",
