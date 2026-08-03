@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+INSTANCE_DIR = "/tmp/instance" if os.environ.get("VERCEL") == "1" else os.path.join(BASE_DIR, "instance")
 DEFAULT_SQLITE_PATH = os.path.join(INSTANCE_DIR, "app.db")
 
 os.makedirs(INSTANCE_DIR, exist_ok=True)
