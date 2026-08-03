@@ -27,6 +27,8 @@ def create_app(test_config=None):
         static_folder="../static",
     )
     app.config.from_object(Config)
+    if is_vercel:
+        app.config["PROPAGATE_EXCEPTIONS"] = True
 
     if test_config:
         app.config.update(test_config)

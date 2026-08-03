@@ -26,7 +26,13 @@ class WSGIWrapper:
             return [f"Flask Boot Failure Traceback:\n\n{self._error}".encode('utf-8')]
             
         # Otherwise, delegate the request to Flask
-        return self._app(environ, start_response)
+        try:
+            return self._app(environ, start_response)
+        except Exception as exc:
+            req_tb = traceback.format_exc()
+            print(f"Request failed:\n{req_tb}", file=sys.stderr)
+            start_response('500 Internal Server Error', [('Content-Type', 'text/plain; charset=utf-8')])
+            return [f"Flask Request Failure Traceback:\n\n{req_tb}".encode('utf-8')]
 
 # Define the app at the top level of the module so Vercel's static AST parser finds it
 app = WSGIWrapper()
