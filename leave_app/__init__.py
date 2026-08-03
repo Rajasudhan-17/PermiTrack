@@ -18,9 +18,11 @@ from .services.workflows import pending_counts_for_user, status_badge
 
 
 def create_app(test_config=None):
+    is_vercel = os.environ.get("VERCEL") == "1"
     app = Flask(
         __name__,
         instance_relative_config=True,
+        instance_path="/tmp/instance" if is_vercel else None,
         template_folder="../templates",
         static_folder="../static",
     )

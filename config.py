@@ -193,7 +193,7 @@ class BaseConfig:
     BREVO_SENDER_NAME = os.environ.get("BREVO_SENDER_NAME")
 
     STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
-    LOCAL_UPLOAD_ROOT = os.path.join(BASE_DIR, "uploads")
+    LOCAL_UPLOAD_ROOT = "/tmp/uploads" if os.environ.get("VERCEL") == "1" else os.path.join(BASE_DIR, "uploads")
     OD_UPLOAD_PREFIX = os.environ.get("OD_UPLOAD_PREFIX", "od_proofs")
     LEAVE_UPLOAD_PREFIX = os.environ.get("LEAVE_UPLOAD_PREFIX", "leave_proofs")
     AWS_REGION = os.environ.get("AWS_REGION")
