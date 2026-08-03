@@ -877,6 +877,42 @@ Returns:
 
 ---
 
+## Decision-Support: Leave & OD Risk Scoring Engine
+
+The application includes an automated decision-support heuristic engine that evaluates each leave or OD request and assigns a risk score and level before a reviewer opens it. This transforms the application from a simple application form into an active decision-making assistant.
+
+### Risk Metrics
+
+#### 1. Leave Risk Heuristics
+Risk scores range from `0` to `100` and are categorized into levels: **High Risk** (>= 50), **Medium Risk** (20-49), and **Low Risk** (< 20).
+The scoring is computed using the following factors:
+- **Leave Balance Check**:
+  - Balance < 3 days: **+40 points**
+  - Balance < 8 days: **+20 points**
+- **Emergency Leave Frequency**:
+  - >= 3 emergency leaves in past 30 days: **+35 points**
+  - 2 emergency leaves in past 30 days: **+15 points**
+- **Cumulative Absence Risk (Attendance Drop Risk)**:
+  - Tracks total missed class days (approved leaves + approved ODs + current requested days) in the past 90 days:
+    - > 15 days (High risk of drop below 80% attendance): **+30 points**
+    - > 8 days (Medium risk of drop below 90% attendance): **+15 points**
+- **Long Request Duration**:
+  - Single request length > 5 days: **+15 points**
+
+#### 2. OD Risk Heuristics
+- **Cumulative Absence Check**:
+  - > 15 total absence days in past 90 days: **+30 points**
+  - > 8 total absence days in past 90 days: **+15 points**
+- **Monthly OD Request Frequency**:
+  - >= 5 OD requests submitted in past 30 days: **+40 points**
+  - >= 3 OD requests submitted in past 30 days: **+20 points**
+
+### Interface Integration
+- **Pending Review Lists**: Displays a colored badge (**High** / **Medium** / **Low**) beside each request, showing the numeric score and displaying details on hover.
+- **Review Form Detail Page**: Renders an alert card outlining the specific factors that contributed to the risk score, giving faculty and HODs context for their decisions.
+
+---
+
 ## Administration Features
 
 ### User Management

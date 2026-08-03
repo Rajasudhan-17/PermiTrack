@@ -254,3 +254,28 @@ def student_history(user_id):
     )
 
 
+@bp.route("/bulk_approve_leaves", methods=["POST"])
+@login_required
+def bulk_approve_leaves():
+    from ..services.workflows import apply_leave_review
+    leave_ids = request.form.getlist("leave_ids")
+    comment = request.form.get("comment", "Batch approved from dashboard.").strip()
+    
+    success_count = 0
+    for lid in leave_ids:
+        try:
+            success, response = apply_leave_review(int(lid), current_user.id, "APPROVE", comment)
+            if success:
+                success_count += 1
+        except Exception:
+            pass
+            
+    if success_count > 0:
+        flash(f"Successfully approved {success_count} leave requests.", "success")
+    else:
+        flash("No leave requests were approved.", "warning")
+        
+    return redirect(url_for("main.index"))
+
+
+

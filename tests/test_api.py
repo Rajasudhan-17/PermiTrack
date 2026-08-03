@@ -184,3 +184,84 @@ def test_audit_log_actor_capture(client, seed_data):
     assert login_log.actor_id == student.id
     assert login_log.target_id == student.id
     assert login_log.target_type == "User"
+
+
+def test_api_pending_risk_shape(client, seed_data):
+    student = seed_data["student"]
+    mentor = seed_data["mentor"]
+
+    # Clear table records
+    db.session.query(Leave).delete()
+    db.session.query(OD).delete()
+    db.session.commit()
+
+    # Seed one leave and one OD
+    leave = Leave(
+        requested_by=student.id,
+        approved_by=mentor.id,
+        start_date=date.today(),
+        end_date=date.today(),
+        reason="Checkup",
+        status=RequestStatus.PENDING.value
+    )
+    db.session.add(leave)
+
+    coordinator = User(
+        username="event_coordinator_risk_shape",
+        email="coord_risk_shape@example.com",
+        role=Role.EVENT_COORDINATOR.value,
+        full_name="Event Coordinator Risk Shape",
+    )
+    coordinator.set_password("password")
+    db.session.add(coordinator)
+    db.session.commit()
+
+    od = OD(
+        requested_by=student.id,
+        faculty_id=seed_data["faculty"].id,
+        event_coordinator_id=coordinator.id,
+        event_date=date.today(),
+        reason="Hackathon",
+        status=RequestStatus.PENDING.value
+    )
+    db.session.add(od)
+    db.session.commit()
+
+    # Login as Mentor to view pending leave
+    res_login = client.post("/api/v1/auth/login", json={"username": mentor.username, "password": "password"})
+    token = res_login.get_json()["token"]
+
+    res_pending = client.get("/api/v1/pending", headers={"X-API-Token": token})
+    assert res_pending.status_code == 200
+    data = res_pending.get_json()
+    
+    # Assert leave risk shape
+    assert "pending_leaves" in data
+    pending_leaves = data["pending_leaves"]
+    assert len(pending_leaves) == 1
+    leave_item = pending_leaves[0]
+    assert "risk" in leave_item
+    risk = leave_item["risk"]
+    assert isinstance(risk["score"], int)
+    assert isinstance(risk["level"], str)
+    assert isinstance(risk["reasons"], list)
+
+    # Login as Event Coordinator to view pending OD
+    res_login_coord = client.post("/api/v1/auth/login", json={"username": coordinator.username, "password": "password"})
+    coord_token = res_login_coord.get_json()["token"]
+
+    res_pending_coord = client.get("/api/v1/pending", headers={"X-API-Token": coord_token})
+    assert res_pending_coord.status_code == 200
+    data_coord = res_pending_coord.get_json()
+
+    assert "pending_ods" in data_coord
+    pending_ods = data_coord["pending_ods"]
+    assert len(pending_ods) == 1
+    od_item = pending_ods[0]
+    assert "risk" in od_item
+    risk_od = od_item["risk"]
+    assert isinstance(risk_od["score"], int)
+    assert isinstance(risk_od["level"], str)
+    assert isinstance(risk_od["reasons"], list)
+
+

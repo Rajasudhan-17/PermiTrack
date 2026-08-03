@@ -18,9 +18,16 @@
   <form method="post" enctype="multipart/form-data">
     {{ csrf_input() }}
     <div class="mb-3">
-      <label for="proof" class="form-label">Proof document</label>
-      <input type="file" id="proof" name="proof" class="form-control" accept=".png,.jpg,.jpeg,.gif,.pdf" required>
-      <div class="form-text text-light-emphasis">Accepted formats: PNG, JPG, GIF, PDF.</div>
+      <label class="form-label">Proof document</label>
+      <div class="file-upload-wrapper">
+        <span class="file-upload-icon">📁</span>
+        <span class="file-upload-text">
+          <strong>Click to browse</strong> or drag & drop proof file here
+        </span>
+        <input type="file" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf" required>
+        <div id="file-preview" class="file-name-preview"></div>
+      </div>
+      <div class="form-text text-light-emphasis mt-2">Accepted formats: PNG, JPG, GIF, PDF.</div>
     </div>
 
     <div class="d-flex gap-2 mt-4">
@@ -29,4 +36,18 @@
     </div>
   </form>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('proof').addEventListener('change', function(e) {
+    const fileName = e.target.files.length > 0 ? e.target.files[0].name : '';
+    const preview = document.getElementById('file-preview');
+    if (fileName) {
+      preview.innerHTML = `✓ Selected: <strong>${fileName}</strong>`;
+    } else {
+      preview.innerHTML = '';
+    }
+  });
+</script>
 {% endblock %}

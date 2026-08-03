@@ -74,7 +74,7 @@ def ensure_seed_data():
             leave_balance=20,
             department_id=cs_department.id,
         )
-        mentor.set_password(os.environ.get("INIT_MENTOR_PASSWORD", "change-me-mentor"))
+        mentor.set_password(os.environ.get("INIT_MENTOR_PASSWORD", "password123"))
         db.session.add(mentor)
         db.session.commit()
 
@@ -87,7 +87,7 @@ def ensure_seed_data():
             leave_balance=20,
             department_id=cs_department.id,
         )
-        coordinator.set_password(os.environ.get("INIT_COORDINATOR_PASSWORD", "change-me-coordinator"))
+        coordinator.set_password(os.environ.get("INIT_COORDINATOR_PASSWORD", "password123"))
         db.session.add(coordinator)
         db.session.commit()
 

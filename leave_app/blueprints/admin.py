@@ -575,3 +575,50 @@ def assign_mentor():
         selected_year=year,
         selected_section=section,
     )
+
+
+@bp.route("/bulk_import_mappings", methods=["POST"])
+@login_required
+def bulk_import_mappings():
+    if current_user.role != Role.ADMIN.value:
+        flash("Only Admins can perform bulk imports.", "danger")
+        return redirect(url_for("main.index"))
+        
+    import csv
+    import io
+    
+    file = request.files.get("mapping_csv")
+    if not file or not file.filename.endswith(".csv"):
+        flash("Please upload a valid CSV file.", "danger")
+        return redirect(url_for("main.index"))
+        
+    stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
+    csv_reader = csv.reader(stream)
+    
+    # Optional headers: student_username, mentor_username, faculty_username
+    headers = next(csv_reader, None)
+    
+    import_count = 0
+    for row in csv_reader:
+        if len(row) >= 2:
+            student_user = row[0].strip()
+            mentor_user = row[1].strip()
+            
+            student = User.query.filter_by(username=student_user).first()
+            mentor = User.query.filter_by(username=mentor_user).first()
+            
+            if student and mentor:
+                student.mentor_id = mentor.id
+                
+            if len(row) >= 3:
+                faculty_user = row[2].strip()
+                faculty = User.query.filter_by(username=faculty_user).first()
+                if student and student.class_group and faculty:
+                    student.class_group.faculty_id = faculty.id
+                    
+            import_count += 1
+            
+    db.session.commit()
+    flash(f"Successfully processed {import_count} student mappings.", "success")
+    return redirect(url_for("main.index"))
+

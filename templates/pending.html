@@ -24,6 +24,7 @@
             {% if current_user.role == 'faculty' %}
               <th>Conflict Check</th>
             {% endif %}
+            <th>Risk Score</th>
             <th>Status</th>
             <th></th>
           </tr>
@@ -54,6 +55,12 @@
                   {% endif %}
                 </td>
               {% endif %}
+              <td>
+                {% set score, level, reasons = calculate_leave_risk(leave) %}
+                <span class="badge bg-{{ risk_badge_class(level) }}" title="{{ reasons | join(', ') if reasons else 'No risk factors detected' }}">
+                  {{ level }} ({{ score }})
+                </span>
+              </td>
               <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
               <td class="text-end">
                 <a href="{{ url_for('leaves.review', leave_id=leave.id) }}" class="btn btn-sm btn-primary">Review</a>

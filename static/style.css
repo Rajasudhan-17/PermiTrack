@@ -15,6 +15,22 @@
     --radius: 24px;
 }
 
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(8, 20, 31, 0.5);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(88, 214, 255, 0.2);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(88, 214, 255, 0.5);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -145,6 +161,14 @@ a {
     background: var(--panel);
     box-shadow: var(--shadow);
     backdrop-filter: blur(18px);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.content-card:hover,
+.section-card:hover,
+.hero-panel:hover {
+    border-color: rgba(88, 214, 255, 0.3) !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45), 0 0 30px rgba(88, 214, 255, 0.04);
 }
 
 .hero-panel,
@@ -304,6 +328,7 @@ textarea {
     background: rgba(255, 255, 255, 0.08) !important;
     color: var(--text) !important;
     padding: 0.85rem 1rem !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
 }
 
 .form-select option {
@@ -335,8 +360,9 @@ textarea::placeholder {
 .form-control:focus,
 .form-select:focus,
 textarea:focus {
-    border-color: rgba(143, 227, 255, 0.8) !important;
-    box-shadow: 0 0 0 0.2rem rgba(88, 214, 255, 0.18) !important;
+    border-color: rgba(88, 214, 255, 0.85) !important;
+    box-shadow: 0 0 15px rgba(88, 214, 255, 0.25) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
 }
 
 .btn {
@@ -399,7 +425,45 @@ textarea:focus {
 
 .badge {
     border-radius: 999px;
-    padding: 0.45rem 0.7rem;
+    padding: 0.45rem 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+}
+
+.badge.bg-success {
+    background: rgba(67, 198, 172, 0.15) !important;
+    color: #4df3ad !important;
+    border: 1px solid rgba(67, 198, 172, 0.3) !important;
+    box-shadow: 0 0 10px rgba(67, 198, 172, 0.1);
+}
+
+.badge.bg-warning {
+    background: rgba(243, 201, 105, 0.15) !important;
+    color: #ffd875 !important;
+    border: 1px solid rgba(243, 201, 105, 0.3) !important;
+    box-shadow: 0 0 10px rgba(243, 201, 105, 0.1);
+}
+
+.badge.bg-info {
+    background: rgba(88, 214, 255, 0.15) !important;
+    color: #8ce1ff !important;
+    border: 1px solid rgba(88, 214, 255, 0.3) !important;
+    box-shadow: 0 0 10px rgba(88, 214, 255, 0.1);
+}
+
+.badge.bg-danger {
+    background: rgba(255, 116, 116, 0.15) !important;
+    color: #ff9494 !important;
+    border: 1px solid rgba(255, 116, 116, 0.3) !important;
+    box-shadow: 0 0 10px rgba(255, 116, 116, 0.1);
+}
+
+.badge.bg-secondary {
+    background: rgba(166, 195, 216, 0.15) !important;
+    color: #cfefff !important;
+    border: 1px solid rgba(166, 195, 216, 0.3) !important;
 }
 
 .empty-state {
@@ -714,5 +778,65 @@ textarea:focus {
 .small-link:hover {
     color: var(--accent-strong);
     text-decoration: underline !important;
+}
+
+/* Custom Drag & Drop / Upload styling */
+.file-upload-wrapper {
+    position: relative;
+    border: 2.5px dashed rgba(166, 195, 216, 0.24);
+    border-radius: 18px;
+    padding: 2.2rem 1.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.file-upload-wrapper:hover {
+    border-color: rgba(88, 214, 255, 0.55);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 24px rgba(88, 214, 255, 0.05);
+}
+
+.file-upload-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.file-upload-icon {
+    font-size: 2.4rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    display: block;
+    transition: transform 0.2s ease;
+}
+
+.file-upload-wrapper:hover .file-upload-icon {
+    transform: scale(1.1);
+}
+
+.file-upload-text {
+    color: var(--muted);
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.file-upload-text strong {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.file-name-preview {
+    margin-top: 0.5rem;
+    color: var(--success);
+    font-weight: 500;
+    font-size: 0.85rem;
 }
 

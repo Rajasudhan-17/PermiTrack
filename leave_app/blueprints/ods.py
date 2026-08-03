@@ -236,3 +236,72 @@ def download_od_letter(od_id):
         headers={"Content-Disposition": f"attachment; filename=od_approval_letter_{od.id}.pdf"},
     )
 
+
+@bp.route("/bulk_approve_ods", methods=["POST"])
+@login_required
+def bulk_approve_ods():
+    from ..services.workflows import apply_od_review
+    od_ids = request.form.getlist("od_ids")
+    comment = request.form.get("comment", "Batch approved from dashboard.").strip()
+    
+    success_count = 0
+    for oid in od_ids:
+        try:
+            success, response = apply_od_review(int(oid), current_user.id, "APPROVE", comment)
+            if success:
+                success_count += 1
+        except Exception:
+            pass
+            
+    if success_count > 0:
+        flash(f"Successfully approved {success_count} OD requests.", "success")
+    else:
+        flash("No OD requests were approved.", "warning")
+        
+    return redirect(url_for("main.index"))
+
+
+@bp.route("/bulk_import_attendance", methods=["POST"])
+@login_required
+def bulk_import_attendance():
+    if current_user.role != Role.EVENT_COORDINATOR.value:
+        flash("Only Event Coordinators can access this endpoint.", "danger")
+        return redirect(url_for("main.index"))
+        
+    from ..services.workflows import apply_od_review
+    import csv
+    import io
+    
+    file = request.files.get("attendance_csv")
+    if not file or not file.filename.endswith(".csv"):
+        flash("Please upload a valid CSV file.", "danger")
+        return redirect(url_for("main.index"))
+        
+    stream = io.StringIO(file.stream.read().decode("utf-8"), newline=None)
+    csv_reader = csv.reader(stream)
+    
+    imported_identifiers = set()
+    for row in csv_reader:
+        if row:
+            val = row[0].strip().lower()
+            if val:
+                imported_identifiers.add(val)
+                
+    pending_ods = OD.query.filter_by(event_coordinator_id=current_user.id, status=RequestStatus.PENDING.value).all()
+    
+    success_count = 0
+    for od in pending_ods:
+        student = od.requester
+        if student and (student.username.lower() in imported_identifiers or student.email.lower() in imported_identifiers):
+            success, response = apply_od_review(od.id, current_user.id, "APPROVE", "Auto-approved via CSV attendance import.")
+            if success:
+                success_count += 1
+                
+    if success_count > 0:
+        flash(f"Successfully imported attendance. Auto-approved {success_count} matching OD requests.", "success")
+    else:
+        flash("No matching pending OD requests found for the uploaded student list.", "warning")
+        
+    return redirect(url_for("main.index"))
+
+

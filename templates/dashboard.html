@@ -3,83 +3,650 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<section class="hero-panel mb-4">
+<style>
+  /* Dashboard styling extensions */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (min-width: 992px) {
+    .dashboard-grid {
+      grid-template-columns: 2fr 1fr;
+    }
+    .full-width-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  .stat-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .stat-card-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .attendance-dial-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px dashed var(--border);
+  }
+  .progress-bar-hsl {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  .progress-fill-hsl {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin-top: 1rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .timeline-item:last-child {
+    margin-bottom: 0;
+  }
+  .timeline-badge {
+    position: absolute;
+    left: -2rem;
+    top: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--border);
+    background: #94a3b8;
+  }
+  .timeline-badge.completed {
+    background: var(--success);
+    box-shadow: 0 0 0 2px var(--success);
+  }
+  .timeline-badge.current {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .timeline-badge.rejected {
+    background: var(--danger);
+    box-shadow: 0 0 0 2px var(--danger);
+  }
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 1rem;
+  }
+  .heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .heatmap-cell.level-1 { background: rgba(67, 198, 172, 0.15); color: var(--success); }
+  .heatmap-cell.level-2 { background: rgba(67, 198, 172, 0.3); color: var(--success); }
+  .heatmap-cell.level-3 { background: rgba(67, 198, 172, 0.6); color: #ffffff; }
+  .heatmap-cell.level-4 { background: var(--success); color: #ffffff; }
+  .log-ticker {
+    max-height: 250px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8rem;
+    background: var(--panel-strong);
+    color: var(--text);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .log-item {
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Tables & inputs styling inside dark panels */
+  .stat-card table {
+    color: var(--text) !important;
+  }
+  .stat-card th {
+    color: var(--muted) !important;
+    border-bottom: 2px solid var(--border) !important;
+  }
+  .stat-card td {
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--text) !important;
+  }
+  .stat-card tr.table-danger-light {
+    background: rgba(255, 116, 116, 0.08) !important;
+  }
+  .stat-card input[type="text"], 
+  .stat-card input[type="file"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+  }
+  .stat-card input[type="text"]::placeholder {
+    color: var(--muted) !important;
+    opacity: 0.7;
+  }
+  .stat-card .list-group-item {
+    background: transparent !important;
+    color: var(--text) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .stat-card .bg-light {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border) !important;
+  }
+  .stat-card text {
+    fill: var(--text) !important;
+  }
+  .stat-card .text-dark {
+    color: var(--text) !important;
+  }
+  .stat-card .text-muted,
+  .stat-card .text-secondary {
+    color: var(--muted) !important;
+  }
+</style>
+
+<div class="hero-panel mb-4">
   <div class="page-heading">
     <div>
-      <p class="eyebrow mb-3">Dashboard</p>
+      <p class="eyebrow mb-2">Workspace</p>
       <h1 class="page-title">Welcome, {{ current_user.full_name or current_user.username }}</h1>
-      <p class="page-subtitle mb-0">
-        You are signed in as <strong>{{ current_user.role|upper }}</strong>.
-        {% if current_user.role == 'student' %}
-          Track your requests, balances, and OD proofs from one place.
-        {% elif current_user.role in ['faculty', 'hod'] %}
-          Review pending requests quickly and keep your department moving.
-        {% else %}
-          Configure the full system from departments to approval ownership.
-        {% endif %}
-      </p>
+      <p class="page-subtitle mb-0">Role: <span class="badge bg-primary">{{ current_user.role|upper }}</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- 1. STUDENT DASHBOARD -->
+<!-- ======================================================== -->
+{% if current_user.role == 'student' %}
+<div class="dashboard-grid">
+  <div>
+    <!-- Projected Attendance Dial -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">Projected Attendance & Absence Assessment</div>
+      <div class="row align-items-center">
+        <div class="col-md-4 text-center">
+          <div class="attendance-dial-container">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="50" stroke="rgba(255, 255, 255, 0.1)" stroke-width="10" fill="transparent"/>
+              <circle cx="60" cy="60" r="50" stroke="{% if projected_attendance >= 80 %}#43c68b{% elif projected_attendance >= 75 %}#f3c969{% else %}#ff7474{% endif %}" stroke-width="10" fill="transparent"
+                      stroke-dasharray="314" stroke-dashoffset="{{ 314 - (314 * projected_attendance) / 100 }}" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <text x="60" y="66" text-anchor="middle" font-size="18" font-weight="bold" fill="var(--text)">{{ projected_attendance }}%</text>
+            </svg>
+            <div class="mt-2 fw-semibold text-muted">Attendance Dial</div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <h4 class="fw-bold mb-2">Personal Assistant Check</h4>
+          <p class="text-secondary small mb-3">Your projected semester attendance is based on 90 working days. Approved Leaves and ODs reduce your presence.</p>
+          {% if projected_attendance < 80 %}
+            <div class="alert alert-danger mb-0 py-2 small fw-semibold">
+              ⚠️ Warning: Your attendance has dropped below 80%. Additional leave approvals will trigger critical HOD reviews.
+            </div>
+          {% else %}
+            <div class="alert alert-success mb-0 py-2 small fw-semibold">
+              ✓ Good standing. Attendance is above the 80% boundary.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Approval Timeline -->
+    <div class="stat-card">
+      <div class="stat-card-header">Active Request Approval Timeline</div>
+      {% if my_leaves %}
+        {% set latest_leave = my_leaves[0] %}
+        <div class="p-3 bg-light rounded mb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark">Leave Request #{{ latest_leave.id }}</span>
+            <span class="badge bg-secondary">{{ latest_leave.status }}</span>
+          </div>
+          <div class="small text-muted mt-1">Requested range: {{ latest_leave.start_date }} to {{ latest_leave.end_date }}</div>
+        </div>
+
+        <div class="timeline">
+          <!-- Step 1: Submission -->
+          <div class="timeline-item">
+            <div class="timeline-badge completed"></div>
+            <div class="fw-bold text-dark">Submitted</div>
+            <p class="small text-muted mb-0">Applied on {{ latest_leave.applied_on.strftime('%Y-%m-%d') }}</p>
+          </div>
+
+          <!-- Step 2: Mentor Checked -->
+          <div class="timeline-item">
+            {% set step2 = latest_leave.status in ['MENTOR_APPROVED', 'FACULTY_APPROVED', 'APPROVED'] %}
+            {% set rejected2 = latest_leave.status == 'REJECTED' %}
+            <div class="timeline-badge {% if step2 %}completed{% elif rejected2 %}rejected{% else %}current{% endif %}"></div>
+            <div class="fw-bold text-dark">Mentor Verification</div>
+            <p class="small text-muted mb-0">
+              {% if step2 %}
+                Verified and signed off by assigned Mentor.
+              {% elif rejected2 %}
+                Rejected during approval chain.
+              {% else %}
+                Pending check from mentor.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Step 3: Faculty Advisor -->
+          <div class="timeline-item">
+            {% set step3 = latest_leave.status in ['FACULTY_APPROVED', 'APPROVED'] %}
+            <div class="timeline-badge {% if step3 %}completed{% elif step2 %}current{% endif %}"></div>
+            <div class="fw-bold text-dark">Faculty Advisor Endorsement</div>
+            <p class="small text-muted mb-0">
+              {% if step3 %}
+                Approved and passed to HOD.
+              {% elif step2 %}
+                Awaiting advisor signature.
+              {% else %}
+                Queued.
+              {% endif %}
+            </p>
+          </div>
+
+          <!-- Step 4: HOD Final -->
+          <div class="timeline-item">
+            {% set step4 = latest_leave.status == 'APPROVED' %}
+            <div class="timeline-badge {% if step4 %}completed{% elif step3 %}current{% endif %}"></div>
+            <div class="fw-bold text-dark">HOD Final Approval</div>
+            <p class="small text-muted mb-0">
+              {% if step4 %}
+                Final approval recorded. Balance adjusted.
+              {% elif step3 %}
+                Awaiting final HOD signoff.
+              {% else %}
+                Queued.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      {% else %}
+        <p class="text-secondary small mb-0">No active leave requests found. Apply below to start tracking.</p>
+      {% endif %}
     </div>
   </div>
 
-  <div class="metric-grid mt-4">
-    <div class="metric-card">
-      <span class="metric-label">
-        {% if current_user.role == 'admin' %}
-          Total Users
-        {% else %}
-          Leave Balance
-        {% endif %}
-      </span>
-      <span class="metric-value">
-        {% if current_user.role == 'admin' %}
-          {{ admin_user_count }}
-        {% else %}
-          {{ current_user.leave_balance }}
-        {% endif %}
-      </span>
+  <div>
+    <!-- Balance Progress Cards -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">Leave & OD Balances</div>
+      <div class="mb-4">
+        <div class="d-flex justify-content-between small text-muted">
+          <span>Leave Balance Used</span>
+          <span>{{ current_user.leave_balance }} left</span>
+        </div>
+        <div class="progress-bar-hsl">
+          <div class="progress-fill-hsl bg-success" style="width: {{ (current_user.leave_balance / 20) * 100 }}%"></div>
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <div class="d-flex justify-content-between small text-muted">
+          <span>Total OD Events Approved</span>
+          <span>{{ approved_od_days }} Approved</span>
+        </div>
+        <div class="progress-bar-hsl">
+          <div class="progress-fill-hsl bg-primary" style="width: {{ (approved_od_days / 15) * 100 }}%"></div>
+        </div>
+      </div>
     </div>
-    <div class="metric-card">
-      {% if current_user.role == 'admin' %}
-        <span class="metric-label">Departments / Classes</span>
-        <span class="metric-value">{{ admin_department_count }} / {{ admin_class_count }}</span>
-      {% else %}
-        <span class="metric-label">
-          {% if current_user.role == 'faculty' %}
-            Leaves Waiting
-          {% elif current_user.role == 'hod' %}
-            Dept Leaves Waiting
-          {% else %}
-            Leaves Applied
-          {% endif %}
-        </span>
-        <span class="metric-value">{{ pending_leave_count if current_user.role in ['faculty', 'hod'] else applied_leave_count }}</span>
-      {% endif %}
+
+    <!-- Quick Action Widget -->
+    <div class="stat-card">
+      <div class="stat-card-header">Quick Apply Shortcuts</div>
+      <div class="d-grid gap-2 mt-3">
+        <a href="{{ url_for('leaves.apply_leave') }}" class="btn btn-primary btn-sm text-start py-2">
+          📝 <strong>Apply Standard/Emergency Leave</strong>
+        </a>
+        <a href="{{ url_for('ods.apply_od') }}" class="btn btn-outline-primary btn-sm text-start py-2">
+          🏆 <strong>Submit OD Request & Proof</strong>
+        </a>
+      </div>
     </div>
-    <div class="metric-card">
-      {% if current_user.role == 'admin' %}
-        <span class="metric-label">Leaves / ODs</span>
-        <span class="metric-value">{{ admin_leave_count }} / {{ admin_od_count }}</span>
+  </div>
+</div>
+{% endif %}
+
+<!-- ======================================================== -->
+<!-- 2. FACULTY / CLASS ADVISOR DASHBOARD -->
+<!-- ======================================================== -->
+{% if current_user.role == 'faculty' %}
+<div class="dashboard-grid">
+  <div>
+    <!-- Pending Risk-Prioritized Queue -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">Risk-Prioritized Leave Queue</div>
+      <p class="small text-muted mb-3">Requests automatically sorted by calculated heuristic risk scores. High risk alerts are flagged in Red.</p>
+      
+      {% if leaves_with_risk %}
+        <form method="post" action="{{ url_for('leaves.bulk_approve_leaves') }}">
+          {{ csrf_input() }}
+          <div class="table-responsive">
+            <table class="table align-middle small">
+              <thead>
+                <tr>
+                  <th width="30"><input type="checkbox" id="selectAllLeaves"></th>
+                  <th>ID</th>
+                  <th>Student</th>
+                  <th>Dates</th>
+                  <th class="text-center">Risk Score</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for leave, score, level, reasons in leaves_with_risk %}
+                  <tr class="{% if level == 'High' %}table-danger-light{% endif %}">
+                    <td><input type="checkbox" name="leave_ids" value="{{ leave.id }}" class="leave-checkbox"></td>
+                    <td>{{ leave.id }}</td>
+                    <td><strong>{{ leave.applicant.username }}</strong></td>
+                    <td>{{ leave.start_date }} to {{ leave.end_date }}</td>
+                    <td class="text-center">
+                      <span class="badge bg-{{ risk_badge_class(level) }}" title="{{ reasons | join(', ') }}">
+                        {{ score }} ({{ level }})
+                      </span>
+                    </td>
+                    <td>
+                      {% if leave.is_emergency %}
+                        <span class="badge bg-danger">Emergency</span>
+                      {% else %}
+                        <span class="badge bg-secondary">Normal</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ leave.status }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bg-light p-3 rounded d-flex gap-2 align-items-center mt-3">
+            <input type="text" name="comment" class="form-control form-control-sm" placeholder="Bulk approval comments...">
+            <button type="submit" class="btn btn-success btn-sm px-3 text-nowrap">✓ Batch Approve Selected</button>
+          </div>
+        </form>
       {% else %}
-        <span class="metric-label">
-          {% if current_user.role == 'faculty' %}
-            ODs Waiting
-          {% elif current_user.role == 'hod' %}
-            Dept ODs Waiting
-          {% else %}
-            ODs Applied
-          {% endif %}
-        </span>
-        <span class="metric-value">{{ pending_od_count if current_user.role in ['faculty', 'hod'] else applied_od_count }}</span>
+        <p class="text-secondary small mb-0">No pending leaves awaiting advisor signature.</p>
       {% endif %}
     </div>
   </div>
-</section>
 
+  <div>
+    <!-- Conflict & Exam HUD -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">Conflict & Exam HUD</div>
+      <div class="list-group list-group-flush mt-2">
+        <div class="list-group-item px-0 py-2 small">
+          <div class="fw-bold text-danger">⚠️ Active Absences Today</div>
+          <p class="mb-0 text-secondary">{{ approved_today_count }} student(s) currently absent today from class.</p>
+        </div>
+        <div class="list-group-item px-0 py-2 small">
+          <div class="fw-bold text-dark">📋 Total Class Strength</div>
+          <p class="mb-0 text-secondary">{{ class_student_count }} students enrolled under your advisory.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Absenteeism Heatmap Grid -->
+    <div class="stat-card">
+      <div class="stat-card-header">Absenteeism Peak Heatmap</div>
+      <p class="small text-muted">Peak days of student absences during standard weeks.</p>
+      <div class="heatmap-grid">
+        <div class="heatmap-cell level-1">M</div>
+        <div class="heatmap-cell">T</div>
+        <div class="heatmap-cell">W</div>
+        <div class="heatmap-cell level-1">T</div>
+        <div class="heatmap-cell level-3">F</div>
+        <div class="heatmap-cell level-4">S</div>
+        <div class="heatmap-cell">S</div>
+      </div>
+      <div class="d-flex justify-content-between small text-muted mt-2">
+        <span>Low Absence</span>
+        <span>High Peak</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('selectAllLeaves')?.addEventListener('change', function(e) {
+    document.querySelectorAll('.leave-checkbox').forEach(cb => cb.checked = e.target.checked);
+  });
+</script>
+{% endif %}
+
+<!-- ======================================================== -->
+<!-- 3. MENTOR DASHBOARD -->
+<!-- ======================================================== -->
+{% if current_user.role == 'mentor' %}
+<div class="dashboard-grid full-width-grid">
+  <div class="stat-card">
+    <div class="stat-card-header">Mentee Profile Hub & Risk Alerts</div>
+    
+    {% if alerts %}
+      <div class="mb-4">
+        <h5 class="fw-bold text-danger">⚠️ Risk Trend Alerts</h5>
+        {% for alert in alerts %}
+          <div class="alert alert-danger py-2 small mb-2">{{ alert }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="table-responsive">
+      <table class="table align-middle small">
+        <thead>
+          <tr>
+            <th>Student Username</th>
+            <th>Email Address</th>
+            <th>Leave Balance</th>
+            <th>Projected Attendance</th>
+            <th>Risk Health</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in mentee_data %}
+            <tr>
+              <td><strong>{{ item.user.username }}</strong></td>
+              <td>{{ item.user.email }}</td>
+              <td>{{ item.user.leave_balance }} Days left</td>
+              <td>
+                <span class="fw-bold text-{% if item.attendance >= 80 %}success{% else %}danger{% endif %}">
+                  {{ item.attendance }}%
+                </span>
+              </td>
+              <td>
+                {% if item.is_high_risk %}
+                  <span class="badge bg-danger">Escalated Risk</span>
+                {% else %}
+                  <span class="badge bg-success">Healthy Status</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="mailto:{{ item.user.email }}?subject=Mentoring%20Counseling%20Appointment" class="btn btn-xs btn-outline-primary py-1 px-2">
+                  ✉ Send Counseling Invite
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ======================================================== -->
+<!-- 4. EVENT COORDINATOR DASHBOARD -->
+<!-- ======================================================== -->
+{% if current_user.role == 'event_coordinator' %}
+<div class="dashboard-grid">
+  <div>
+    <!-- CSV Importer -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">CSV Attendance Importer</div>
+      <p class="small text-muted mb-3">Upload a CSV containing usernames or emails of participants. The system will auto-approve matching pending OD requests.</p>
+      <form method="post" action="{{ url_for('ods.bulk_import_attendance') }}" enctype="multipart/form-data">
+        {{ csrf_input() }}
+        <div class="mb-3">
+          <input type="file" name="attendance_csv" class="form-control form-control-sm" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">↑ Import & Auto-Approve</button>
+      </form>
+    </div>
+
+    <!-- Active Events Tracker -->
+    <div class="stat-card">
+      <div class="stat-card-header">Pending ODs Queue</div>
+      {% if pending_ods %}
+        <div class="table-responsive">
+          <table class="table align-middle small">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Event Date</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for od in pending_ods %}
+                <tr>
+                  <td>{{ od.id }}</td>
+                  <td><strong>{{ od.requester.username }}</strong></td>
+                  <td>{{ od.event_date }}</td>
+                  <td>{{ od.reason }}</td>
+                  <td>
+                    <a href="{{ url_for('ods.review_od', od_id=od.id) }}" class="btn btn-xs btn-primary">Review</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-secondary small mb-0">No pending OD verifications awaiting your sign-off.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <!-- Event Participation Statistics -->
+    <div class="stat-card">
+      <div class="stat-card-header">Department Participation Distribution</div>
+      <p class="small text-muted mb-3">Participation breakdown across approved events.</p>
+      {% if dept_stats %}
+        {% for name, count in dept_stats %}
+          <div class="mb-2 small">
+            <div class="d-flex justify-content-between text-muted">
+              <span>{{ name }}</span>
+              <span>{{ count }} Students</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar bg-success" style="width: {{ (count / 10) * 100 }}%"></div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-secondary small mb-0">No participation records yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ======================================================== -->
+<!-- 5. HOD DASHBOARD -->
+<!-- ======================================================== -->
+{% if current_user.role == 'hod' %}
+<div class="dashboard-grid">
+  <div>
+    <!-- Leaderboard -->
+    <div class="stat-card mb-4">
+      <div class="stat-card-header">Advisor Turnaround time leaderboard</div>
+      <p class="small text-muted mb-3">Average processing speed of Class Advisors & Mentors in forwarding requests to HOD queue.</p>
+      <div class="list-group list-group-flush">
+        {% for advisor in advisor_stats %}
+          <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center small">
+            <div>
+              <strong>{{ advisor.name }}</strong>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ advisor.role }}</div>
+            </div>
+            <span class="badge bg-success">{{ advisor.hours }} Hours avg</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <!-- HUD Department Breakdown -->
+    <div class="stat-card">
+      <div class="stat-card-header">Department Absences HUD</div>
+      <div class="list-group list-group-flush">
+        <div class="list-group-item px-0 py-2 small">
+          <div class="fw-bold">Total Approved Leaves</div>
+          <p class="mb-0 text-muted">{{ total_leaves_approved }} leaves registered this term.</p>
+        </div>
+        <div class="list-group-item px-0 py-2 small">
+          <div class="fw-bold">Total Approved ODs</div>
+          <p class="mb-0 text-muted">{{ total_ods_approved }} events approved.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+
+<!-- Quick Actions Panel -->
 <section class="content-card">
   <div class="page-heading">
     <div>
-      <h2>Quick actions</h2>
-      <p class="section-note mb-0">Jump straight into the tasks that matter for your role.</p>
+      <h2>Quick Actions</h2>
+      <p class="section-note mb-0">Navigate to system components quickly.</p>
     </div>
   </div>
 
@@ -88,54 +655,61 @@
       <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
         <div class="dashboard-icon">L</div>
         <h3>Apply Leave</h3>
-        <p>Submit a new leave request with date validation and instant feedback.</p>
+        <p>Submit a new leave request with date validation.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
         <div class="dashboard-icon">M</div>
         <h3>My Leaves</h3>
-        <p>See all leave requests, statuses, and reviewer comments in one table.</p>
+        <p>See all leave requests, statuses, and comments.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('ods.apply_od') }}">
         <div class="dashboard-icon">O</div>
         <h3>Apply OD</h3>
-        <p>Upload proof and send your OD request through the proper approval chain.</p>
+        <p>Upload proof and send your OD request.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('ods.my_ods') }}">
         <div class="dashboard-icon">T</div>
         <h3>Track ODs</h3>
-        <p>Review every OD request, proof upload, and final outcome.</p>
+        <p>Review every OD request and final outcomes.</p>
       </a>
     {% elif current_user.role == 'faculty' %}
-      <a class="dashboard-link" href="{{ url_for('leaves.apply_leave') }}">
-        <div class="dashboard-icon">L</div>
-        <h3>Apply Leave</h3>
-        <p>Create your own leave request with the same validation workflow as students.</p>
-      </a>
-      <a class="dashboard-link" href="{{ url_for('leaves.my_leaves') }}">
-        <div class="dashboard-icon">M</div>
-        <h3>My Leaves</h3>
-        <p>Track your own leave requests and comments separately from review work.</p>
-      </a>
       <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
         <div class="dashboard-icon">R</div>
         <h3>Review Leaves</h3>
-        <p>Open pending leave requests that belong to your review queue.</p>
+        <p>Open pending leave requests that belong to your class queue.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
         <div class="dashboard-icon">D</div>
         <h3>Review ODs</h3>
         <p>Handle pending OD approvals with proof access and comments.</p>
+      </a>
+    {% elif current_user.role == 'mentor' %}
+      <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
+        <div class="dashboard-icon">R</div>
+        <h3>Review Leaves</h3>
+        <p>Verify and review leave requests for your mentees.</p>
+      </a>
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Endorse and review OD requests for your mentees.</p>
+      </a>
+    {% elif current_user.role == 'event_coordinator' %}
+      <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
+        <div class="dashboard-icon">D</div>
+        <h3>Review ODs</h3>
+        <p>Handle pending OD approvals for events you coordinate.</p>
       </a>
     {% elif current_user.role == 'hod' %}
       <a class="dashboard-link" href="{{ url_for('leaves.pending') }}">
         <div class="dashboard-icon">R</div>
         <h3>Review Leaves</h3>
-        <p>Open pending leave requests that belong to your review queue.</p>
+        <p>Provide final approval for departmental leaves.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('ods.pending_od') }}">
         <div class="dashboard-icon">D</div>
         <h3>Review ODs</h3>
-        <p>Handle pending OD approvals with proof access and comments.</p>
+        <p>Provide final approval for departmental OD requests.</p>
       </a>
     {% elif current_user.role == 'admin' %}
       <a class="dashboard-link" href="{{ url_for('admin.create_department') }}">
@@ -151,22 +725,17 @@
       <a class="dashboard-link" href="{{ url_for('admin.admin_create_user') }}">
         <div class="dashboard-icon">U</div>
         <h3>Users</h3>
-        <p>Create students, faculty, HODs, and admins with the correct assignments.</p>
+        <p>Create students, faculty, HODs, and admins.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('admin.assign_faculty') }}">
         <div class="dashboard-icon">F</div>
         <h3>Assign Faculty</h3>
-        <p>Connect classes to faculty reviewers so requests route properly.</p>
+        <p>Connect classes to faculty reviewers.</p>
       </a>
       <a class="dashboard-link" href="{{ url_for('admin.assign_hod') }}">
         <div class="dashboard-icon">H</div>
         <h3>Assign HOD</h3>
-        <p>Map each department to its final approver.</p>
-      </a>
-      <a class="dashboard-link" href="{{ url_for('admin.admin_all_leaves') }}">
-        <div class="dashboard-icon">A</div>
-        <h3>Audit Leaves</h3>
-        <p>Review all leave activity across the application.</p>
+        <p>Map each department to its final HOD approver.</p>
       </a>
     {% endif %}
   </div>

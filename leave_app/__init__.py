@@ -70,10 +70,22 @@ def register_template_helpers(app):
     @app.context_processor
     def inject_template_helpers():
         pending_leave_count, pending_od_count = pending_counts_for_user(current_user)
+        from .services.risk_scoring import calculate_leave_risk, calculate_od_risk
+        
+        def risk_badge_class(level):
+            if level == "High":
+                return "danger"
+            elif level == "Medium":
+                return "warning text-dark"
+            return "success"
+
         return {
             "pending_leave_count": pending_leave_count,
             "pending_od_count": pending_od_count,
             "status_badge": status_badge,
+            "calculate_leave_risk": calculate_leave_risk,
+            "calculate_od_risk": calculate_od_risk,
+            "risk_badge_class": risk_badge_class,
         }
 
 

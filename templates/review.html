@@ -53,6 +53,25 @@
     {% endif %}
   </div>
 
+  {% set score, level, reasons = calculate_leave_risk(leave) %}
+  <div class="card mb-4 border-{% if level == 'High' %}danger{% elif level == 'Medium' %}warning{% else %}success{% endif %}">
+    <div class="card-header bg-{% if level == 'High' %}danger text-white{% elif level == 'Medium' %}warning text-dark{% else %}success text-white{% endif %} d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-semibold" style="margin: 0;">Decision-Support: Leave Risk Assessment</h5>
+      <span class="badge bg-white text-dark fw-bold">{{ level }} Risk ({{ score }}/100)</span>
+    </div>
+    <div class="card-body">
+      {% if reasons %}
+        <ul class="mb-0 ps-3" style="margin: 0; padding-left: 20px;">
+          {% for reason in reasons %}
+            <li class="text-{% if level == 'High' %}danger{% elif level == 'Medium' %}warning{% else %}success{% endif %} fw-semibold" style="margin-bottom: 5px;">{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-success fw-semibold">No critical risk factors identified. Request looks clean.</div>
+      {% endif %}
+    </div>
+  </div>
+
   {% if leave.status == 'MENTOR_APPROVED' and current_user.role == 'faculty' %}
     <div class="alert alert-info mb-4">Mentor comment: {{ leave.review_comment or 'No comment provided.' }}</div>
   {% endif %}

@@ -9,6 +9,7 @@ from ..extensions import db
 from ..models import Leave, OD, RequestStatus, Role, User, utcnow
 from ..services.auth_security import clear_failed_logins, login_allowed, register_failed_login
 from ..services.workflows import pending_counts_for_user
+from ..services.risk_scoring import calculate_leave_risk, calculate_od_risk
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -162,7 +163,10 @@ def api_pending(current_user):
     leaves = []
     ods = []
 
-    if current_user.role == Role.MENTOR.value:
+    if current_user.role == Role.EVENT_COORDINATOR.value:
+        leaves = []
+        ods = OD.query.filter_by(event_coordinator_id=current_user.id, status=RequestStatus.PENDING.value).all()
+    elif current_user.role == Role.MENTOR.value:
         leaves = (
             Leave.query.join(User, User.id == Leave.requested_by)
             .filter(User.mentor_id == current_user.id, Leave.status == RequestStatus.PENDING.value)
@@ -201,26 +205,36 @@ def api_pending(current_user):
             .all()
         )
 
-    leave_data = [
-        {
+    leave_data = []
+    for l in leaves:
+        score, level, reasons = calculate_leave_risk(l)
+        leave_data.append({
             "id": l.id,
             "applicant": l.applicant.username,
             "start_date": l.start_date.strftime("%Y-%m-%d"),
             "end_date": l.end_date.strftime("%Y-%m-%d"),
             "reason": l.reason,
             "is_emergency": l.is_emergency,
-        }
-        for l in leaves
-    ]
+            "risk": {
+                "score": score,
+                "level": level,
+                "reasons": reasons
+            }
+        })
 
-    od_data = [
-        {
+    od_data = []
+    for o in ods:
+        score, level, reasons = calculate_od_risk(o)
+        od_data.append({
             "id": o.id,
             "applicant": o.applicant.username,
             "event_date": o.event_date.strftime("%Y-%m-%d"),
             "reason": o.reason,
-        }
-        for o in ods
-    ]
+            "risk": {
+                "score": score,
+                "level": level,
+                "reasons": reasons
+            }
+        })
 
     return jsonify({"pending_leaves": leave_data, "pending_ods": od_data})

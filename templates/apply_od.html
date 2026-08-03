@@ -32,8 +32,15 @@
         <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Describe the OD event and purpose" required></textarea>
       </div>
       <div class="col-12">
-        <label for="proof" class="form-label">Proof upload</label>
-        <input type="file" class="form-control" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf">
+        <label class="form-label">Proof upload</label>
+        <div class="file-upload-wrapper">
+          <span class="file-upload-icon">📁</span>
+          <span class="file-upload-text">
+            <strong>Click to browse</strong> or drag & drop proof file here
+          </span>
+          <input type="file" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf">
+          <div id="file-preview" class="file-name-preview"></div>
+        </div>
       </div>
     </div>
 
@@ -43,4 +50,18 @@
     </div>
   </form>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('proof').addEventListener('change', function(e) {
+    const fileName = e.target.files.length > 0 ? e.target.files[0].name : '';
+    const preview = document.getElementById('file-preview');
+    if (fileName) {
+      preview.innerHTML = `✓ Selected: <strong>${fileName}</strong>`;
+    } else {
+      preview.innerHTML = '';
+    }
+  });
+</script>
 {% endblock %}

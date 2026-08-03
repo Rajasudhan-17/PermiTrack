@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 
 from flask_login import UserMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .extensions import db
 
@@ -93,8 +94,28 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(150))
-    role = db.Column(db.String(20), default=Role.STUDENT.value, nullable=False)
+    _role = db.Column("role", db.String(20), default=Role.STUDENT.value, nullable=False)
     leave_balance = db.Column(db.Integer, default=20, nullable=False)
+
+    @property
+    def db_role(self):
+        return self._role
+
+    @hybrid_property
+    def role(self):
+        from flask import session, has_request_context
+        if has_request_context() and "active_role" in session:
+            if self._role in (Role.FACULTY.value, Role.MENTOR.value):
+                return session["active_role"]
+        return self._role
+
+    @role.setter
+    def role(self, value):
+        self._role = value
+
+    @role.expression
+    def role(cls):
+        return cls._role
     faculty_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     mentor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey("department.id"), nullable=True)

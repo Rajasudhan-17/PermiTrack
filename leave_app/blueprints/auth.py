@@ -11,7 +11,7 @@ from ..services.auth_security import (
     register_failed_otp,
     clear_failed_otps,
 )
-from ..models import User, OTPToken, utcnow
+from ..models import User, OTPToken, utcnow, Role
 from ..services.emailing import send_email
 from ..extensions import db
 from ..services.audit import log_audit_event
@@ -43,6 +43,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             clear_failed_logins(username, client_ip)
+            session.pop("active_role", None)
             login_user(user)
             log_audit_event("LOGIN_SUCCESS", user)
             flash(f"Welcome back, {user.full_name or user.username}.", "success")
@@ -60,6 +61,7 @@ def login():
 @login_required
 def logout():
     log_audit_event("LOGOUT", current_user)
+    session.pop("active_role", None)
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("main.index"))
@@ -187,4 +189,16 @@ def verify_otp():
         return redirect(url_for("auth.login"))
 
     return render_template("verify_otp.html")
+
+
+@bp.route("/switch-role", methods=["POST"])
+@login_required
+def switch_role():
+    target_role = request.form.get("role", "").strip()
+    if current_user.db_role in (Role.FACULTY.value, Role.MENTOR.value) and target_role in (Role.FACULTY.value, Role.MENTOR.value):
+        session["active_role"] = target_role
+        flash(f"Switched role to {target_role.upper()}.", "success")
+    else:
+        flash("Invalid role switch request.", "danger")
+    return redirect(request.referrer or url_for("main.index"))
 

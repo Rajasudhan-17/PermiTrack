@@ -31,7 +31,29 @@
           <ul class="navbar-nav align-items-lg-center gap-lg-2">
             {% if current_user.is_authenticated %}
               <li class="nav-item">
-                <span class="user-pill">{{ current_user.full_name or current_user.username }} | {{ current_user.role|upper }}</span>
+                <span class="user-pill">
+                  {{ current_user.full_name or current_user.username }} | 
+                  {% if current_user.db_role in ['faculty', 'mentor'] %}
+                    <span class="dropdown d-inline">
+                      <a class="dropdown-toggle text-decoration-none fw-bold" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--accent);">
+                        {{ current_user.role|upper }}
+                      </a>
+                      <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" style="border: 1px solid var(--border); background: var(--panel-strong);">
+                        <li>
+                          <form method="post" action="{{ url_for('auth.switch_role') }}">
+                            {{ csrf_input() }}
+                            <input type="hidden" name="role" value="{% if current_user.role == 'faculty' %}mentor{% else %}faculty{% endif %}">
+                            <button type="submit" class="dropdown-item">
+                              Switch to {% if current_user.role == 'faculty' %}MENTOR{% else %}FACULTY{% endif %}
+                            </button>
+                          </form>
+                        </li>
+                      </ul>
+                    </span>
+                  {% else %}
+                    {{ current_user.role|upper }}
+                  {% endif %}
+                </span>
               </li>
 
               {% if current_user.role == 'student' %}
