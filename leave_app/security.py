@@ -30,7 +30,7 @@ def validate_csrf():
     if not current_app.config.get("CSRF_ENABLED", True):
         return
 
-    if request.path.startswith("/api/") or request.path == "/admin/initdb" or request.path == "/initdb":
+    if request.path.startswith("/api/") or "/initdb" in request.path:
         return
 
     if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
