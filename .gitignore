@@ -11,3 +11,4 @@ pytest-cache-files-*/
 tmp*/
 uploads/
 instance/
+node_modules/
