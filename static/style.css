@@ -840,3 +840,10 @@ textarea:focus {
     font-size: 0.85rem;
 }
 
+.file-upload-wrapper.dragover {
+    border-color: rgba(46, 204, 113, 0.6) !important;
+    background: rgba(46, 204, 113, 0.08) !important;
+    box-shadow: 0 8px 24px rgba(46, 204, 113, 0.15) !important;
+}
+
+

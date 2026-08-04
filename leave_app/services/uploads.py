@@ -5,8 +5,16 @@ from uuid import uuid4
 from flask import current_app, redirect, send_from_directory
 
 
-ALLOWED_OD_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
-ALLOWED_OD_MIMETYPES = {"image/png", "image/jpeg", "image/gif", "application/pdf"}
+ALLOWED_OD_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "webp", "doc", "docx"}
+ALLOWED_OD_MIMETYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "application/pdf",
+    "image/webp",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+}
 IMAGE_SIGNATURES = {
     b"\x89PNG\r\n\x1a\n": "image/png",
     b"\xff\xd8\xff": "image/jpeg",
@@ -95,6 +103,12 @@ def sniff_upload_mimetype(file_storage):
 
     if header.startswith(b"%PDF"):
         return "application/pdf"
+    if header.startswith(b"RIFF") and b"WEBP" in header:
+        return "image/webp"
+    if header.startswith(b"PK\x03\x04"):
+        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    if header.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"):
+        return "application/msword"
 
     for signature, mimetype in IMAGE_SIGNATURES.items():
         if header.startswith(signature):
@@ -108,7 +122,7 @@ def validate_uploaded_proof(file_storage):
         return None, None, "Proof file is missing."
 
     if not allowed_od_file(file_storage.filename):
-        return None, None, "Only PNG, JPG, GIF, and PDF files are allowed."
+        return None, None, "Only PNG, JPG, GIF, PDF, WEBP, DOC, and DOCX files are allowed."
 
     detected_mimetype = sniff_upload_mimetype(file_storage)
     if detected_mimetype not in ALLOWED_OD_MIMETYPES:
@@ -119,7 +133,10 @@ def validate_uploaded_proof(file_storage):
         "image/png": {"png"},
         "image/jpeg": {"jpg", "jpeg"},
         "image/gif": {"gif"},
-        "application/pdf": {"pdf"}
+        "application/pdf": {"pdf"},
+        "image/webp": {"webp"},
+        "application/msword": {"doc"},
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {"docx"}
     }
     allowed_exts = expected_extensions.get(detected_mimetype, set())
     if extension not in allowed_exts:
