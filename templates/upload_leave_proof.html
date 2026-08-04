@@ -17,6 +17,14 @@
 
   <form method="post" enctype="multipart/form-data">
     {{ csrf_input() }}
+    {% if leave.proof_filename %}
+      <div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center justify-content-between text-dark" style="background: rgba(88, 214, 255, 0.15); border-color: rgba(88, 214, 255, 0.3);">
+        <span class="text-white">Existing proof has been uploaded.</span>
+        <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-info">
+          Review current proof
+        </a>
+      </div>
+    {% endif %}
     <div class="mb-3">
       <label class="form-label">Proof document</label>
       <div class="file-upload-wrapper">
@@ -69,10 +77,17 @@
     }
   }, false);
 
+  let currentObjectURL = null;
+
   fileInput.addEventListener('change', function(e) {
-    const fileName = e.target.files.length > 0 ? e.target.files[0].name : '';
-    if (fileName) {
-      preview.innerHTML = `✓ Selected: <strong>${fileName}</strong>`;
+    if (currentObjectURL) {
+      URL.revokeObjectURL(currentObjectURL);
+      currentObjectURL = null;
+    }
+    const file = e.target.files.length > 0 ? e.target.files[0] : null;
+    if (file) {
+      currentObjectURL = URL.createObjectURL(file);
+      preview.innerHTML = `✓ Selected: <a href="${currentObjectURL}" target="_blank" class="text-success fw-bold text-decoration-underline">${file.name}</a> (Click to review)`;
     } else {
       preview.innerHTML = '';
     }

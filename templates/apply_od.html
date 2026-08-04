@@ -83,10 +83,17 @@
     }
   }, false);
 
+  let currentObjectURL = null;
+
   fileInput.addEventListener('change', function(e) {
-    const fileName = e.target.files.length > 0 ? e.target.files[0].name : '';
-    if (fileName) {
-      preview.innerHTML = `✓ Selected: <strong>${fileName}</strong>`;
+    if (currentObjectURL) {
+      URL.revokeObjectURL(currentObjectURL);
+      currentObjectURL = null;
+    }
+    const file = e.target.files.length > 0 ? e.target.files[0] : null;
+    if (file) {
+      currentObjectURL = URL.createObjectURL(file);
+      preview.innerHTML = `✓ Selected: <a href="${currentObjectURL}" target="_blank" class="text-success fw-bold text-decoration-underline">${file.name}</a> (Click to review)`;
     } else {
       preview.innerHTML = '';
     }
