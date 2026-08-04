@@ -147,6 +147,7 @@ def save_uploaded_file(file_storage, prefix, filename, mimetype):
         return
 
     folder_config_key = "OD_UPLOAD_FOLDER" if prefix == current_app.config["OD_UPLOAD_PREFIX"] else "LEAVE_UPLOAD_FOLDER"
+    file_storage.stream.seek(0)
     file_storage.save(os.path.join(current_app.config[folder_config_key], filename))
 
 

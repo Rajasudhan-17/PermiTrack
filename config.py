@@ -138,7 +138,7 @@ def refresh_runtime_config_values(app):
     app.config["STORAGE_ADDRESSING_STYLE"] = first_non_empty(
         app.config.get("STORAGE_ADDRESSING_STYLE"),
         app.config.get("OCI_STORAGE_ADDRESSING_STYLE"),
-        default="path" if app.config["STORAGE_BACKEND"] == "oci" else "auto",
+        default="path" if (app.config["STORAGE_BACKEND"] == "oci" or app.config.get("STORAGE_ENDPOINT_URL")) else "auto",
     )
     app.config["STORAGE_PRESIGNED_URL_EXPIRY"] = int(
         first_non_empty(
