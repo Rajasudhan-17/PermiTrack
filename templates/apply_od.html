@@ -85,6 +85,14 @@
 
   let currentObjectURL = null;
 
+  function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📕 PDF';
+    if (['doc', 'docx'].includes(ext)) return '📘 DOC';
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return '🖼️ IMG';
+    return '📄 FILE';
+  }
+
   fileInput.addEventListener('change', function(e) {
     if (currentObjectURL) {
       URL.revokeObjectURL(currentObjectURL);
@@ -93,7 +101,25 @@
     const file = e.target.files.length > 0 ? e.target.files[0] : null;
     if (file) {
       currentObjectURL = URL.createObjectURL(file);
-      preview.innerHTML = `✓ Selected: <a href="${currentObjectURL}" target="_blank" class="text-success fw-bold text-decoration-underline">${file.name}</a> (Click to review)`;
+      preview.innerHTML = `
+        <div class="selected-file-card d-flex align-items-center justify-content-between p-2 mt-2 rounded" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary file-icon">${getFileIcon(file.name)}</span>
+            <a href="${currentObjectURL}" target="_blank" class="text-white text-decoration-none fw-medium text-truncate" style="max-width: 250px;" title="Click to review">${file.name}</a>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-2" aria-label="Remove file" id="remove-file-btn" style="font-size: 0.75rem; padding: 0.25rem;"></button>
+        </div>
+      `;
+      preview.querySelector('#remove-file-btn').addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        fileInput.value = '';
+        preview.innerHTML = '';
+        if (currentObjectURL) {
+          URL.revokeObjectURL(currentObjectURL);
+          currentObjectURL = null;
+        }
+      });
     } else {
       preview.innerHTML = '';
     }
