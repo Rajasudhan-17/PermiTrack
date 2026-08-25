@@ -179,7 +179,7 @@ class BaseConfig:
 
     MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
     MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
-    MAIL_USE_TLS = env_flag("MAIL_USE_TLS", True)
+    MAIL_USE_TL = env_flag("MAIL_USE_TLS", True)
     MAIL_USE_SSL = env_flag("MAIL_USE_SSL", False)
     MAIL_BACKEND = default_mail_backend()
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")

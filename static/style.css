@@ -20,13 +20,16 @@
     width: 8px;
     height: 8px;
 }
+
 ::-webkit-scrollbar-track {
     background: rgba(8, 20, 31, 0.5);
 }
+
 ::-webkit-scrollbar-thumb {
     background: rgba(88, 214, 255, 0.2);
     border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(88, 214, 255, 0.5);
 }
@@ -409,7 +412,7 @@ textarea:focus {
     margin-bottom: 0;
 }
 
-.table > :not(caption) > * > * {
+.table> :not(caption)>*>* {
     background: rgba(255, 255, 255, 0.04);
     border-bottom-color: rgba(255, 255, 255, 0.08);
     color: var(--text);
@@ -666,6 +669,7 @@ textarea:focus {
         opacity: 0;
         transform: translateY(24px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -677,6 +681,7 @@ textarea:focus {
         opacity: 0;
         transform: translateY(30px) scale(0.97);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
@@ -687,6 +692,7 @@ textarea:focus {
     from {
         transform: translate(-50%, -50%) rotate(0deg);
     }
+
     to {
         transform: translate(-50%, -50%) rotate(360deg);
     }
@@ -696,15 +702,19 @@ textarea:focus {
     from {
         transform: translate(-50%, -50%) rotate(360deg);
     }
+
     to {
         transform: translate(-50%, -50%) rotate(0deg);
     }
 }
 
 @keyframes bob {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-8px);
     }
@@ -725,6 +735,7 @@ textarea:focus {
 }
 
 @media (max-width: 767px) {
+
     .hero-panel,
     .content-card,
     .section-card,
