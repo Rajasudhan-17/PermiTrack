@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %}Attendance History - Permitrack{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Attendance Records & History</h2>
+            <p class="text-muted">Track attendance logs, leave/OD deductions, and attendance percentages.</p>
+        </div>
+        {% if current_user.role in ['faculty', 'hod', 'admin'] %}
+        <a href="{{ url_for('attendance.mark_attendance') }}" class="btn btn-primary">
+            Mark Class Attendance
+        </a>
+        {% endif %}
+    </div>
+
+    {% if is_student or student %}
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Attendance Percentage</div>
+                <div class="display-6 fw-bold {% if summary.percentage >= 80 %}text-success{% elif summary.percentage >= 75 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ summary.percentage }}%
+                </div>
+                <div class="small text-muted mt-1">(Effective Present + OD)</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Total Classes</div>
+                <div class="h3 fw-bold mb-0 text-dark">{{ summary.total }}</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Present</div>
+                <div class="h3 fw-bold mb-0 text-success">{{ summary.present }}</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Approved Leave</div>
+                <div class="h3 fw-bold mb-0 text-warning">{{ summary.leave }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <div class="text-muted small mb-1">Approved OD</div>
+                <div class="h3 fw-bold mb-0 text-info">{{ summary.od }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Log Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                Attendance Log for {{ student.full_name or student.username }}
+                {% if student.register_number %}({{ student.register_number }}){% endif %}
+            </h5>
+            <span class="badge bg-secondary">{{ records|length }} Record(s)</span>
+        </div>
+        <div class="card-body p-0">
+            {% if records %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Reason / Notes</th>
+                            <th>Marked By</th>
+                            <th>Marked On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td class="fw-bold">{{ r.date.strftime('%B %d, %Y') }}</td>
+                            <td>
+                                {% if r.status == 'PRESENT' %}
+                                <span class="badge bg-success">PRESENT</span>
+                                {% elif r.status == 'ABSENT' %}
+                                <span class="badge bg-danger">ABSENT</span>
+                                {% elif r.status == 'LEAVE' %}
+                                <span class="badge bg-warning text-dark">LEAVE</span>
+                                {% elif r.status == 'OD' %}
+                                <span class="badge bg-info text-dark">ON DUTY (OD)</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ r.reason or 'N/A' }}</td>
+                            <td>{{ r.marker.full_name or r.marker.username if r.marker else 'System' }}</td>
+                            <td class="small text-muted">{{ r.marked_on.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                No attendance records logged yet for this student.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm p-4 text-center">
+        <h5 class="text-muted">Select a Student</h5>
+        <p class="text-muted mb-0">Please select a student from <a href="{{ url_for('main.students_list') }}">My Students</a> or mark class attendance to view reports.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

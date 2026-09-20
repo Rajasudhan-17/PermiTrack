@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block title %}My Students - Permitrack{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>{{ list_title }}</h1>
+      <p class="section-note mb-0">View all students under your charge. You can review their leave/OD histories, and temporarily block/unblock them from applying for Leave and OD.</p>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <h3 class="mb-3">Assigned Students</h3>
+    {% if students %}
+      <div class="table-wrap">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Register Number</th>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Class / Department</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <td><strong>{{ student.register_number or '-' }}</strong></td>
+                <td>{{ student.full_name or student.username }}</td>
+                <td>{{ student.username }}</td>
+                <td>
+                  {% if student.class_group %}
+                    {{ student.class_group.department.name }} Y{{ student.class_group.year }}{{ student.class_group.section }}
+                  {% elif student.department %}
+                    {{ student.department.name }} (No Class Group)
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if student.is_blocked %}
+                    <span class="badge bg-danger">BLOCKED</span>
+                  {% else %}
+                    <span class="badge bg-success">ACTIVE</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('leaves.student_history', user_id=student.id) }}" class="btn btn-sm btn-outline-primary">
+                      View History
+                    </a>
+                    {% if student.is_blocked %}
+                      <form method="post" action="{{ url_for('main.unblock_student', student_id=student.id) }}" class="d-inline">
+                        {{ csrf_input() }}
+                        <button type="submit" class="btn btn-sm btn-success">
+                          Revoke Block
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="post" action="{{ url_for('main.block_student', student_id=student.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to block this student from applying for Leave and OD?');">
+                        {{ csrf_input() }}
+                        <button type="submit" class="btn btn-sm btn-danger">
+                          Block Student
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state py-4 text-center text-muted">
+        No students currently assigned or found under your authority.
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

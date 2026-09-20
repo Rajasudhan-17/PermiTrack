@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}Review OD{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 860px;">
+  <div class="page-heading">
+    <div>
+      <h1>Review OD #{{ od.id }}</h1>
+      <p class="section-note mb-0">Verify the event details, inspect the uploaded proof, and record your decision.</p>
+    </div>
+    <span class="badge bg-{{ status_badge(od.status) }}">{{ od.status.replace('_', ' ') }}</span>
+  </div>
+
+  <div class="info-list mb-4">
+    <div class="info-row">
+      <div class="info-label">Applicant</div>
+      <div><a href="{{ url_for('leaves.student_history', user_id=od.requester.id) }}" class="text-info fw-semibold text-decoration-none">{{ od.requester.full_name or od.requester.username }}</a></div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Event Date</div>
+      <div>{{ od.event_date.strftime('%Y-%m-%d') }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Reason</div>
+      <div>{{ od.reason }}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Proof</div>
+      <div>
+        {% if od.proof_filename %}
+          <a href="{{ url_for('ods.send_od_proof', od_id=od.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">Open uploaded proof</a>
+        {% else %}
+          <span class="muted-text">No proof uploaded</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% set score, level, reasons = calculate_od_risk(od) %}
+  <div class="card mb-4 border-{% if level == 'High' %}danger{% elif level == 'Medium' %}warning{% else %}success{% endif %}">
+    <div class="card-header bg-{% if level == 'High' %}danger text-white{% elif level == 'Medium' %}warning text-dark{% else %}success text-white{% endif %} d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 fw-semibold" style="margin: 0;">Decision-Support: OD Risk Assessment</h5>
+      <span class="badge bg-white text-dark fw-bold">{{ level }} Risk ({{ score }}/100)</span>
+    </div>
+    <div class="card-body">
+      {% if reasons %}
+        <ul class="mb-0 ps-3" style="margin: 0; padding-left: 20px;">
+          {% for reason in reasons %}
+            <li class="text-{% if level == 'High' %}danger{% elif level == 'Medium' %}warning{% else %}success{% endif %} fw-semibold" style="margin-bottom: 5px;">{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-success fw-semibold">No critical risk factors identified. Request looks clean.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if od.status == 'EVENT_COORDINATOR_APPROVED' and current_user.role == 'mentor' %}
+    <div class="alert alert-info mb-4">Event Coordinator comment: {{ od.review_comment or 'No comment provided.' }}</div>
+  {% endif %}
+  {% if od.status == 'MENTOR_APPROVED' and current_user.role == 'faculty' %}
+    <div class="alert alert-info mb-4">Mentor comment: {{ od.review_comment or 'No comment provided.' }}</div>
+  {% endif %}
+  {% if od.status == 'FACULTY_APPROVED' and current_user.role == 'hod' %}
+    <div class="alert alert-info mb-4">Faculty comment: {{ od.review_comment or 'No comment provided.' }}</div>
+  {% endif %}
+
+  <form method="post">
+    {{ csrf_input() }}
+    <label for="comment" class="form-label">Comment</label>
+    <textarea name="comment" id="comment" rows="4" class="form-control" placeholder="Add context for the applicant">{{ od.review_comment or '' }}</textarea>
+
+    <div class="d-flex gap-2 mt-4">
+      <button name="action" value="APPROVE" type="submit" class="btn btn-success">Approve</button>
+      <button name="action" value="REJECT" type="submit" class="btn btn-danger">Reject</button>
+      <a href="{{ url_for('ods.pending_od') }}" class="btn btn-secondary">Back</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block title %}Apply OD{% endblock %}
+
+{% block content %}
+<section class="content-card mx-auto" style="max-width: 760px;">
+  <div class="page-heading">
+    <div>
+      <h1>Apply for On-Duty</h1>
+      <p class="section-note mb-0">Submit your event date, reason, and proof so the request reaches the right reviewer.</p>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ csrf_input() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="event_date" class="form-label">Event date</label>
+        <input type="date" class="form-control" id="event_date" name="event_date" required>
+      </div>
+      <div class="col-md-6">
+        <label for="event_coordinator_id" class="form-label">Event Coordinator</label>
+        <select class="form-select" id="event_coordinator_id" name="event_coordinator_id" required>
+          <option value="">Select Event Coordinator</option>
+          {% for ec in event_coordinators %}
+            <option value="{{ ec.id }}">{{ ec.full_name or ec.username }} ({{ ec.username }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label for="reason" class="form-label">Reason</label>
+        <textarea class="form-control" id="reason" name="reason" rows="5" placeholder="Describe the OD event and purpose" required></textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Proof upload</label>
+        <input type="file" class="form-control mt-3 proof-file-input" id="proof" name="proof" accept=".png,.jpg,.jpeg,.gif,.pdf,.webp,.doc,.docx">
+        <div id="file-preview" class="file-name-preview" aria-live="polite">
+          <span class="file-preview-placeholder">No file selected.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary">Submit OD request</button>
+      <a href="{{ url_for('ods.my_ods') }}" class="btn btn-secondary">Back to my ODs</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('proof');
+    const preview = document.getElementById('file-preview');
+    const previewEmptyState = '<span class="file-preview-placeholder">No file selected.</span>';
+
+    if (!fileInput || !preview) {
+      return;
+    }
+
+    let currentObjectURL = null;
+
+    function getFileIcon(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      if (ext === 'pdf') return 'PDF';
+      if (['doc', 'docx'].includes(ext)) return 'DOC';
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'IMG';
+      return 'FILE';
+    }
+
+    function clearSelectedFile() {
+      fileInput.value = '';
+      preview.innerHTML = previewEmptyState;
+
+      if (currentObjectURL) {
+        URL.revokeObjectURL(currentObjectURL);
+        currentObjectURL = null;
+      }
+    }
+
+    function renderSelectedFile(file) {
+      if (currentObjectURL) {
+        URL.revokeObjectURL(currentObjectURL);
+        currentObjectURL = null;
+      }
+
+      if (!file) {
+        clearSelectedFile();
+        return;
+      }
+
+      currentObjectURL = URL.createObjectURL(file);
+      preview.innerHTML = `
+        <div class="selected-file-card">
+          <div class="selected-file-main">
+            <span class="file-type-badge">${getFileIcon(file.name)}</span>
+            <a href="${currentObjectURL}" target="_blank" rel="noopener noreferrer" class="selected-file-link" title="Preview selected file before submitting">${file.name}</a>
+          </div>
+          <button type="button" class="selected-file-remove" aria-label="Remove selected file">Cancel</button>
+        </div>
+      `;
+
+      preview.querySelector('.selected-file-remove').addEventListener('click', function(evt) {
+        evt.preventDefault();
+        clearSelectedFile();
+      });
+    }
+
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files.length > 0 ? e.target.files[0] : null;
+      renderSelectedFile(file);
+    });
+  });
+</script>
+{% endblock %}

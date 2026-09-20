@@ -1,0 +1,204 @@
+{% extends "layout.html" %}
+
+{% block title %}Student History - {{ student.full_name or student.username }}{% endblock %}
+
+{% block head %}
+<style>
+  /* Make the container box wider for this page */
+  .page-shell {
+    width: min(1380px, calc(100% - 2rem)) !important;
+  }
+  .text-nowrap-dates {
+    white-space: nowrap;
+  }
+  .student-info-list .info-row {
+    grid-template-columns: 140px minmax(0, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  .student-info-list .info-row .text-white {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+  }
+  .student-info-list .info-row .text-white::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <!-- Back Button and Heading -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h2 mb-1">{{ student.full_name or student.username }}</h1>
+      <p class="section-note mb-0">Overview of student details, leave balances, and request history.</p>
+    </div>
+    <div>
+      {% if current_user.role in ['faculty', 'hod'] %}
+        <a href="{{ url_for('leaves.pending') }}" class="btn btn-secondary btn-sm">&larr; Back to Pending Reviews</a>
+      {% elif current_user.role == 'admin' %}
+        <a href="{{ url_for('admin.admin_create_user') }}" class="btn btn-secondary btn-sm">&larr; Back to Users</a>
+      {% else %}
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Profile Card & Stats -->
+    <div class="col-lg-4">
+      <div class="content-card h-100">
+        <h3 class="h5 mb-4" style="color: #9de7ff;">Academic Profile</h3>
+        <div class="info-list student-info-list">
+          <div class="info-row px-0 py-2">
+            <div class="info-label text-white-50">Username</div>
+            <div class="text-white">{{ student.username }}</div>
+          </div>
+          <div class="info-row px-0 py-2">
+            <div class="info-label text-white-50">Email</div>
+            <div class="text-white">{{ student.email }}</div>
+          </div>
+          <div class="info-row px-0 py-2">
+            <div class="info-label text-white-50">Department</div>
+            <div class="text-white">{{ student.department.name if student.department else 'N/A' }}</div>
+          </div>
+          <div class="info-row px-0 py-2">
+            <div class="info-label text-white-50">Class Group</div>
+            <div class="text-white">
+              {% if student.class_group %}
+                Y{{ student.class_group.year }}{{ student.class_group.section }}
+              {% else %}
+                N/A
+              {% endif %}
+            </div>
+          </div>
+          <div class="info-row px-0 py-2">
+            <div class="info-label text-white-50">Faculty Advisor</div>
+            <div class="text-white">
+              {% if student.class_group and student.class_group.faculty %}
+                {{ student.class_group.faculty.full_name or student.class_group.faculty.username }}
+              {% elif student.faculty %}
+                {{ student.faculty.full_name or student.faculty.username }}
+              {% else %}
+                N/A
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <hr class="soft-divider my-4">
+
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <h4 class="h6 text-white-50 mb-1">Available Leave Balance</h4>
+            <div class="h2 mb-0 fw-bold text-success">{{ student.leave_balance }} Days</div>
+          </div>
+          <div class="p-3 bg-success-subtle rounded-3 text-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-calendar-check" viewBox="0 0 16 16">
+              <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0"/>
+              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requests History Tabs/Tables -->
+    <div class="col-lg-8">
+      <div class="content-card mb-4">
+        <h3 class="h5 mb-3" style="color: #9de7ff;">Leave Requests History</h3>
+        {% if leaves %}
+          <div class="table-wrap">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Dates</th>
+                  <th>Duration</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Comment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for leave in leaves %}
+                  <tr>
+                    <td>{{ leave.id }}</td>
+                    <td class="text-nowrap-dates">
+                      <div>{{ leave.start_date.strftime('%Y-%m-%d') }}</div>
+                      <div class="text-white-50" style="font-size: 0.78rem; margin-top: 1px;">to {{ leave.end_date.strftime('%Y-%m-%d') }}</div>
+                    </td>
+                    <td>{{ (leave.end_date - leave.start_date).days + 1 }} d</td>
+                    <td>
+                      {% if leave.is_emergency %}
+                        <span class="badge bg-danger-subtle text-danger-emphasis">Emergency</span>
+                      {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">Standard</span>
+                      {% endif %}
+                    </td>
+                    <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
+                    <td>
+                      <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ leave.reason }}">
+                        {{ leave.reason }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ leave.review_comment or '' }}">
+                        {{ leave.review_comment or '-' }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state py-4 text-center">No leave requests found.</div>
+        {% endif %}
+      </div>
+
+      <div class="content-card">
+        <h3 class="h5 mb-3" style="color: #9de7ff;">On-Duty (OD) Requests History</h3>
+        {% if ods %}
+          <div class="table-wrap">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Event Date</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Comment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for od in ods %}
+                  <tr>
+                    <td>{{ od.id }}</td>
+                    <td class="text-nowrap-dates">{{ od.event_date.strftime('%Y-%m-%d') }}</td>
+                    <td><span class="badge bg-{{ status_badge(od.status) }}">{{ od.status.replace('_', ' ') }}</span></td>
+                    <td>
+                      <span class="d-inline-block text-truncate" style="max-width: 200px;" title="{{ od.reason }}">
+                        {{ od.reason }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="d-inline-block text-truncate" style="max-width: 200px;" title="{{ od.review_comment or '' }}">
+                        {{ od.review_comment or '-' }}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state py-4 text-center">No OD requests found.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

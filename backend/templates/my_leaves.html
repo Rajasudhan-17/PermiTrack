@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}My Leaves{% endblock %}
+
+{% block content %}
+<section class="content-card">
+  <div class="page-heading">
+    <div>
+      <h1>My Leaves</h1>
+      <p class="section-note mb-0">Review every leave request, status, and comment in one place.</p>
+    </div>
+    <a href="{{ url_for('leaves.apply_leave') }}" class="btn btn-primary">Apply new leave</a>
+  </div>
+
+  {% if leaves %}
+    <div class="table-wrap">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Proof</th>
+            <th>Applied On</th>
+            <th>Review Comment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for leave in leaves %}
+            <tr>
+              <td>{{ leave.id }}</td>
+              <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+              <td>
+                {% if leave.is_emergency %}
+                  <span class="badge bg-danger-subtle text-danger-emphasis">Emergency</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis">Standard</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-{{ status_badge(leave.status) }}">{{ leave.status.replace('_', ' ') }}</span></td>
+              <td>
+                {% if leave.proof_filename %}
+                  <a href="{{ url_for('leaves.send_leave_proof', leave_id=leave.id) }}" target="_blank" class="btn btn-sm btn-outline-primary">View Proof</a>
+                {% elif leave.requires_followup_proof %}
+                  <a href="{{ url_for('leaves.upload_leave_proof', leave_id=leave.id) }}" class="btn btn-sm btn-warning">Upload Proof</a>
+                {% else %}
+                  <span class="muted-text">Not required</span>
+                {% endif %}
+              </td>
+              <td>{{ leave.applied_on.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>{{ leave.review_comment or '-' }}</td>
+              <td>
+                {% if leave.status == 'APPROVED' %}
+                  <a href="{{ url_for('leaves.download_leave_letter', leave_id=leave.id) }}" class="btn btn-sm btn-success">Download Letter</a>
+                {% else %}
+                  <span class="muted-text">-</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No leave requests yet.</div>
+  {% endif %}
+</section>
+{% endblock %}
