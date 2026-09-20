@@ -30,7 +30,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'static/dist',
+    outDir: 'dist',
     emptyOutDir: true,
   },
 });
