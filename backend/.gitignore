@@ -13,13 +13,6 @@ __pycache__/
 instance/
 uploads/
 
-# Node & Vite
-node_modules/
-dist/
-.output/
-.vercel/
-
 # Testing & Logs
 .pytest_cache/
-pytest-cache-files-*/
 *.log

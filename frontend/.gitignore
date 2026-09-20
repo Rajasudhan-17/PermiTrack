@@ -1,0 +1,10 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node & Vite
+node_modules/
+dist/
+.output/
+.vercel/
